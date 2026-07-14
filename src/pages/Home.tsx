@@ -4,14 +4,14 @@ import { Award, CreditCard, MessageSquare, Shield, Trophy } from 'lucide-react';
 import { habboService } from '../services/habboService';
 
 const JERARQUIA = [
-  { name: 'Invitados <BMT>', badge: 'b27134s02155s01133s03114t2711481f3eadf408fec9345f82da9624efa56' },
-  { name: 'Alistados <BMT>', badge: 'b09024s02135s01023s03024s16164967cf3c5c7c85d0a42e0d1cd1cbb6139' },
-  { name: 'Reclutas <BMT>', badge: 'b09134s02155s36047s44134t27114e862510ff77289cfa52c2552470f2105' },
-  { name: 'Sub - Oficial <BMT>', badge: 'b09054s02135s36047s44054t27114cd31c00da2fd4753e88e344a7723ff14' },
-  { name: 'Oficiales <BMT>', badge: 'b09024s02135s36047s44024t271148598db7ba6558ee51c564e76ef038622' },
-  { name: 'Oficiales Superiores <BMT>', badge: 'b09104s02135s36047s44104t2711491934527c2d1d1e021e0a14fce6a11f7' },
-  { name: 'Generales <BMT>', badge: 'b09044s02135s36047s44044t27114f40bb88ea9beaa9d10de4e9af2eaea79' },
-  { name: 'Estado Mayor <BMT>', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642' }
+  { name: 'Invitados <BMT>', badge: 'b09024s02135s01023s03024s16164967cf3c5c7c85d0a42e0d1cd1cbb6139' },
+  { name: 'Alistados <BMT>', badge: 'b09134s02155s36047s44134t27114e862510ff77289cfa52c2552470f2105' },
+  { name: 'Reclutas <BMT>', badge: 'b09054s02135s36047s44054t27114cd31c00da2fd4753e88e344a7723ff14' },
+  { name: 'Sub - Oficial <BMT>', badge: 'b09024s02135s36047s44024t271148598db7ba6558ee51c564e76ef038622' },
+  { name: 'Oficiales <BMT>', badge: 'b09104s02135s36047s44104t2711491934527c2d1d1e021e0a14fce6a11f7' },
+  { name: 'Oficiales Superiores <BMT>', badge: 'b09044s02135s36047s44044t27114f40bb88ea9beaa9d10de4e9af2eaea79' },
+  { name: 'Generales <BMT>', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642' },
+  { name: 'Estado Mayor <BMT>', badge: 'b07244s01134s36047s44244t52114ef2302532c051c38ee561e6bf57d9d42' }
 ];
 
 const GRUPOS_ESPECIALES = [

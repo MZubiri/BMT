@@ -20,7 +20,7 @@ export const TIER_DATA: Tier[] = [
   {
     id: 'reclutas',
     name: 'Reclutas',
-    badge: 'b09134s02155s36047s44134t27114e862510ff77289cfa52c2552470f2105',
+    badge: 'b09054s02135s36047s44054t27114cd31c00da2fd4753e88e344a7723ff14',
     promotions: 8,
     ranks: [
       { name: 'Grumete', promotions: 8, price: 10 },
@@ -36,7 +36,7 @@ export const TIER_DATA: Tier[] = [
   {
     id: 'sub-oficiales',
     name: 'Sub-Oficiales',
-    badge: 'b09054s02135s36047s44054t27114cd31c00da2fd4753e88e344a7723ff14',
+    badge: 'b09024s02135s36047s44024t271148598db7ba6558ee51c564e76ef038622',
     promotions: 12,
     ranks: [
       { name: 'Cabo', promotions: 12, price: 102 },
@@ -52,7 +52,7 @@ export const TIER_DATA: Tier[] = [
   {
     id: 'oficiales',
     name: 'Oficiales',
-    badge: 'b09024s02135s36047s44024t271148598db7ba6558ee51c564e76ef038622',
+    badge: 'b09104s02135s36047s44104t2711491934527c2d1d1e021e0a14fce6a11f7',
     promotions: 18,
     ranks: [
       { name: 'Segundo Teniente', promotions: 18, price: 444 },
@@ -68,7 +68,7 @@ export const TIER_DATA: Tier[] = [
   {
     id: 'oficiales-superiores',
     name: 'Oficiales Superiores',
-    badge: 'b09104s02135s36047s44104t2711491934527c2d1d1e021e0a14fce6a11f7',
+    badge: 'b09044s02135s36047s44044t27114f40bb88ea9beaa9d10de4e9af2eaea79',
     promotions: 22,
     ranks: [
       { name: 'Mayor', promotions: 22, price: 1252 },
@@ -84,7 +84,7 @@ export const TIER_DATA: Tier[] = [
   {
     id: 'generales',
     name: 'Generales',
-    badge: 'b09044s02135s36047s44044t27114f40bb88ea9beaa9d10de4e9af2eaea79',
+    badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642',
     promotions: 28,
     ranks: [
       { name: 'General de Brigada', promotions: 28, price: 2764 },
@@ -98,7 +98,7 @@ export const TIER_DATA: Tier[] = [
   {
     id: 'estado-mayor',
     name: 'Estado Mayor',
-    badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642',
+    badge: 'b07244s01134s36047s44244t52114ef2302532c051c38ee561e6bf57d9d42',
     promotions: 0,
     ranks: [
       { name: 'Tesorero Ejecutivo', promotions: null, price: 5000 },
