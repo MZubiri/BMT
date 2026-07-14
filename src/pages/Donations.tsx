@@ -11,7 +11,7 @@ const OFFICERS: DonorOfficer[] = [
   { name: 'Migue-lito13.-', role: 'Encargado oficial' },
   { name: '-lYeremi-', role: 'Encargado oficial' },
   { name: '...alma@.', role: 'Encargado oficial' },
-  { name: 'Ashleeyy', role: 'Encargado oficial' }
+  { name: 'Ashleeeeyy', role: 'Encargado oficial' }
 ];
 
 export const Donations: React.FC = () => {

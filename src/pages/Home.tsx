@@ -176,13 +176,6 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer Section */}
-      <footer className="home-footer">
-        <p className="footer-tagline font-pixel">[✠] BATALLON MILITAR TACTICO [BMT] [✠] © ™</p>
-        <p className="footer-sub">La nueva era del Batallón Militar Táctico · Fundado en 2025 · Habbo Hotel (sección Hispana)</p>
-        <p className="footer-credits">Dueños: Migue-lito13.- y -lYeremi- · Las placas y avatares se renderizan con el servicio de imágenes oficial de Habbo.</p>
-      </footer>
-
       {/* CSS specific for Home Page */}
       <style>{`
         .home-container {
@@ -476,33 +469,6 @@ export const Home: React.FC = () => {
           font-size: 0.88rem;
           color: var(--text-secondary);
           line-height: 1.45;
-        }
-
-        /* Footer Styles */
-        .home-footer {
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
-          padding-top: 40px;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .footer-tagline {
-          font-size: 0.72rem;
-          color: var(--color-amber);
-          margin-bottom: 6px;
-        }
-
-        .footer-sub {
-          font-size: 0.8rem;
-          color: var(--text-secondary);
-        }
-
-        .footer-credits {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          line-height: 1.4;
         }
       `}</style>
     </div>
