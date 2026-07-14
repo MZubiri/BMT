@@ -228,7 +228,7 @@ export const Home: React.FC = () => {
                 </li>
                 <li>
                   <span className="bullet-gold">✦</span> 
-                  <strong>Guarda Paga de 24 Horas:</strong> Si no puedes retirar tu paga de nómina el sábado, la guardamos por 24 horas.
+                  <strong>Guarda Paga de 48 Horas:</strong> Si no puedes retirar tu paga de nómina el sábado, la guardamos por 48 horas.
                 </li>
                 <li>
                   <span className="bullet-gold">✦</span> 
