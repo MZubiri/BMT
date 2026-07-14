@@ -37,22 +37,22 @@ export const Pay: React.FC = () => {
   useEffect(() => {
     const calculateCountdown = () => {
       const now = new Date();
-      const nextSunday = new Date();
+      const nextSaturday = new Date();
       
-      // Calculate days until next Sunday (0 is Sunday, 1 is Monday, etc.)
+      // Calculate days until next Saturday (0 is Sunday, 1 is Monday, ..., 6 is Saturday)
       const currentDay = now.getDay();
-      const daysUntilSunday = (7 - currentDay) % 7;
+      const daysUntilSaturday = (6 - currentDay + 7) % 7;
       
-      nextSunday.setDate(now.getDate() + daysUntilSunday);
+      nextSaturday.setDate(now.getDate() + daysUntilSaturday);
       // Set to evening pay time, e.g., 18:00
-      nextSunday.setHours(18, 0, 0, 0);
+      nextSaturday.setHours(18, 0, 0, 0);
 
-      // If Sunday and already past 18:00, set to next Sunday
-      if (currentDay === 0 && now.getHours() >= 18) {
-        nextSunday.setDate(nextSunday.getDate() + 7);
+      // If Saturday and already past 18:00, set to next Saturday
+      if (currentDay === 6 && now.getHours() >= 18) {
+        nextSaturday.setDate(nextSaturday.getDate() + 7);
       }
 
-      const diffMs = nextSunday.getTime() - now.getTime();
+      const diffMs = nextSaturday.getTime() - now.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -77,7 +77,7 @@ export const Pay: React.FC = () => {
           <h1>Pagas y Horarios</h1>
         </div>
         <p className="section-subtitle">
-          Paga segura al 100%. Nuestro <strong>único día de pagas</strong> es el <strong className="text-amber">domingo</strong>, según la hora local de cada país.
+          Paga segura al 100%. Nuestro <strong>único día de pagas</strong> es el <strong className="text-amber">sábado</strong>, según la hora local de cada país.
         </p>
       </div>
 
@@ -87,7 +87,7 @@ export const Pay: React.FC = () => {
           <Clock className="text-amber countdown-icon" size={24} />
           <div>
             <h3 className="countdown-title">Próxima sesión de pagas</h3>
-            <p className="countdown-subtitle">Los domingos a partir de las 16:00 - 19:00 local.</p>
+            <p className="countdown-subtitle">Los sábados a partir de las 16:00 - 19:00 local.</p>
           </div>
         </div>
         <div className="countdown-timer font-pixel">
@@ -100,7 +100,7 @@ export const Pay: React.FC = () => {
         <section className="pay-section">
           <h2 className="table-heading-with-icon">
             <Clock className="text-amber" size={20} />
-            Horario del Domingo
+            Horario del Sábado
           </h2>
           <div className="table-container">
             <table className="table">

@@ -15,12 +15,17 @@ const JERARQUIA = [
 ];
 
 const GRUPOS_ESPECIALES = [
-  { name: 'Club VIP <BMT>', badge: 'b07244s01134s36047s44244t52114ef2302532c051c38ee561e6bf57d9d42' },
-  { name: 'Instr. Capacitación <BMT>', badge: 'b09014s02135s01013s03014t5501425f94961d34c6b3efd805544136c48d2' },
-  { name: 'Recursos Humanos RRHH <BMT>', badge: 'b09114s02155s01133s44114t09154d1ff5cf25cde2dcd6f51f55f9fed1799' },
-  { name: '[✠] Despacho <BMT> [✠] © ™', badge: 'b09134s02245s36047s11014s19114ee81c2ae461ce911bf3278cbc18cab9d' },
-  { name: '[✠] Despacho <BMT> [✠] © ™', badge: 'b11134s02014s01114s03094t27014b9662d7c9dc8322cd83b4ae619c04057' },
-  { name: '[✠] Supreme <BMT> [✠] ™', badge: 'b11134s02015s01133s11134t270143d45a022402a8787aafb0f197ff01672' }
+  { name: 'Club <BMT>', badge: 'b07244s01134s36047s44244t52114ef2302532c051c38ee561e6bf57d9d42' },
+  { name: 'Guardia Real <BMT>', badge: 'b11134s02015s01133s03114t271147b3c519ba331db18e6ea510cde95c713' },
+  { name: 'Instr. Capacitación <BMT>', badge: 'b09014s02135s01013s03014t5501425f94961d34c6b3efd805544136c48d2' }
+];
+
+const DEPARTAMENTOS = [
+  { name: 'Dpto. Recursos Humanos', badge: 'b09134s02245s36047s11014s19114ee81c2ae461ce911bf3278cbc18cab9d' },
+  { name: 'Dpto. Entrenamiento', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642', isPending: true },
+  { name: 'Dpto. Ataque', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642', isPending: true },
+  { name: 'Dpto. Capacitaciones', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642', isPending: true },
+  { name: 'Dpto. Eventos', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642', isPending: true }
 ];
 
 export const Home: React.FC = () => {
@@ -223,7 +228,7 @@ export const Home: React.FC = () => {
                 </li>
                 <li>
                   <span className="bullet-gold">✦</span> 
-                  <strong>Guarda Paga de 24 Horas:</strong> Si no puedes retirar tu paga de nómina el domingo, la guardamos por 24 horas.
+                  <strong>Guarda Paga de 24 Horas:</strong> Si no puedes retirar tu paga de nómina el sábado, la guardamos por 24 horas.
                 </li>
                 <li>
                   <span className="bullet-gold">✦</span> 
@@ -271,7 +276,7 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="placas-group">
-          <h3 className="placas-subheading font-pixel">GRUPOS ESPECIALES Y DE MANDO</h3>
+          <h3 className="placas-subheading font-pixel">GRUPOS ESPECIALES Y CLUB</h3>
           <div className="badges-grid grid-3">
             {GRUPOS_ESPECIALES.map((item, idx) => (
               <div key={idx} className="badge-item-card">
@@ -282,6 +287,31 @@ export const Home: React.FC = () => {
                   loading="lazy"
                 />
                 <span className="badge-item-name">{item.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="placas-group">
+          <h3 className="placas-subheading font-pixel">DEPARTAMENTOS</h3>
+          <div className="badges-grid grid-3">
+            {DEPARTAMENTOS.map((item, idx) => (
+              <div key={idx} className="badge-item-card" style={item.isPending ? { opacity: 0.6 } : undefined}>
+                <img 
+                  src={habboService.getBadgeUrl(item.badge)} 
+                  alt={item.name} 
+                  className="badge-item-img"
+                  style={item.isPending ? { filter: 'grayscale(100%) brightness(70%)' } : undefined}
+                  loading="lazy"
+                />
+                <div className="badge-item-info" style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span className="badge-item-name">{item.name}</span>
+                  {item.isPending && (
+                    <span className="font-pixel" style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>
+                      [Placa en diseño]
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -308,7 +338,7 @@ export const Home: React.FC = () => {
             </div>
             <div className="explora-content">
               <h3>Pagas</h3>
-              <p>Horario de pagas del domingo por país y la paga que corresponde a cada rango.</p>
+              <p>Horario de pagas del sábado por país y la paga que corresponde a cada rango.</p>
             </div>
           </Link>
 
