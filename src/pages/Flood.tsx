@@ -30,11 +30,22 @@ const WELCOME_FLOODS: FloodItem[] = [
 
 export const Flood: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [activeBubble, setActiveBubble] = useState<string | null>(null);
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
+      setActiveBubble(id);
+      
+      // Reset copied state
+      setTimeout(() => {
+        setCopiedId(null);
+      }, 2000);
+
+      // Hide the floating bubble after animation finishes
+      setTimeout(() => {
+        setActiveBubble(null);
+      }, 1200);
     });
   };
 
@@ -60,25 +71,32 @@ export const Flood: React.FC = () => {
           <p className="section-desc">Usa estas frases cuando la sala esté bajo ataque para neutralizar al enemigo:</p>
           <div className="bubble-list">
             {DEFENSE_FLOODS.map((item) => (
-              <div key={item.id} className="copy-bubble-container">
-                <div className="habbo-bubble font-habbo">
+              <div key={item.id} className="copy-bubble-row">
+                <div className="habbo-bubble habbo-bubble-white font-habbo">
                   {item.text}
                 </div>
-                <button
-                  onClick={() => handleCopy(item.text, item.id)}
-                  className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
-                  title="Copiar al portapapeles"
-                >
-                  {copiedId === item.id ? (
-                    <>
-                      <Check size={14} className="text-emerald" /> Copiado
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} /> Copiar
-                    </>
+                <div className="btn-relative-container">
+                  {activeBubble === item.id && (
+                    <div className="floating-copied-bubble font-pixel">
+                      ¡Copiado! o/
+                    </div>
                   )}
-                </button>
+                  <button
+                    onClick={() => handleCopy(item.text, item.id)}
+                    className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
+                    title="Copiar al portapapeles"
+                  >
+                    {copiedId === item.id ? (
+                      <>
+                        <Check size={14} className="text-emerald" /> Copiado
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} /> Copiar
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -93,25 +111,32 @@ export const Flood: React.FC = () => {
           <p className="section-desc">Usa estas frases para invitar a nuevos usuarios y reclutas a unirse a las filas:</p>
           <div className="bubble-list">
             {WELCOME_FLOODS.map((item) => (
-              <div key={item.id} className="copy-bubble-container">
-                <div className="habbo-bubble habbo-bubble-welcome font-habbo">
+              <div key={item.id} className="copy-bubble-row">
+                <div className="habbo-bubble habbo-bubble-yellow font-habbo">
                   {item.text}
                 </div>
-                <button
-                  onClick={() => handleCopy(item.text, item.id)}
-                  className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
-                  title="Copiar al portapapeles"
-                >
-                  {copiedId === item.id ? (
-                    <>
-                      <Check size={14} className="text-emerald" /> Copiado
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} /> Copiar
-                    </>
+                <div className="btn-relative-container">
+                  {activeBubble === item.id && (
+                    <div className="floating-copied-bubble font-pixel">
+                      ¡Copiado! o/
+                    </div>
                   )}
-                </button>
+                  <button
+                    onClick={() => handleCopy(item.text, item.id)}
+                    className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
+                    title="Copiar al portapapeles"
+                  >
+                    {copiedId === item.id ? (
+                      <>
+                        <Check size={14} className="text-emerald" /> Copiado
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} /> Copiar
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -157,10 +182,143 @@ export const Flood: React.FC = () => {
           gap: 20px;
         }
 
+        .copy-bubble-row {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          justify-content: space-between;
+        }
+
+        /* Habbo dialog bubble style */
+        .habbo-bubble {
+          position: relative;
+          border: 2px solid #18181b;
+          border-radius: 6px;
+          padding: 10px 16px;
+          color: #000000;
+          box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.9);
+          flex-grow: 1;
+        }
+
+        .habbo-bubble::before {
+          content: '';
+          position: absolute;
+          right: -10px;
+          top: 50%;
+          transform: translateY(-50%);
+          border-width: 5px 0 5px 10px;
+          border-style: solid;
+          border-color: transparent transparent transparent #18181b;
+        }
+
+        .habbo-bubble-white {
+          background-color: #ffffff;
+        }
+
+        .habbo-bubble-white::after {
+          content: '';
+          position: absolute;
+          right: -7px;
+          top: 50%;
+          transform: translateY(-50%);
+          border-width: 4px 0 4px 8px;
+          border-style: solid;
+          border-color: transparent transparent transparent #ffffff;
+        }
+
+        .habbo-bubble-yellow {
+          background-color: #fffbbf; /* Classic Habbo yellow talk bubble */
+        }
+
+        .habbo-bubble-yellow::after {
+          content: '';
+          position: absolute;
+          right: -7px;
+          top: 50%;
+          transform: translateY(-50%);
+          border-width: 4px 0 4px 8px;
+          border-style: solid;
+          border-color: transparent transparent transparent #fffbbf;
+        }
+
         .font-habbo {
-          font-size: 0.85rem;
+          font-size: 0.88rem;
           font-weight: 600;
-          letter-spacing: 0.01em;
+          font-family: monospace, system-ui;
+        }
+
+        /* Floating bubble container */
+        .btn-relative-container {
+          position: relative;
+          flex-shrink: 0;
+        }
+
+        /* Floating copied bubble animation */
+        @keyframes floatUpFade {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, 0);
+          }
+          15% {
+            opacity: 1;
+            transform: translate(-50%, -12px);
+          }
+          85% {
+            opacity: 1;
+            transform: translate(-50%, -18px);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -32px);
+          }
+        }
+
+        .floating-copied-bubble {
+          position: absolute;
+          left: 50%;
+          bottom: 100%;
+          background-color: #4ade80; /* Nice bright green */
+          color: #000000;
+          border: 2px solid #18181b;
+          border-radius: 4px;
+          padding: 4px 10px;
+          font-size: 0.72rem;
+          font-weight: bold;
+          white-space: nowrap;
+          box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.9);
+          animation: floatUpFade 1.2s cubic-bezier(0.25, 1, 0.50, 1) forwards;
+          z-index: 10;
+          pointer-events: none;
+        }
+
+        .floating-copied-bubble::before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          bottom: -6px;
+          transform: translateX(-50%);
+          border-width: 6px 6px 0;
+          border-style: solid;
+          border-color: #18181b transparent;
+        }
+
+        .floating-copied-bubble::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          bottom: -4px;
+          transform: translateX(-50%);
+          border-width: 4px 4px 0;
+          border-style: solid;
+          border-color: #4ade80 transparent;
+        }
+
+        .copy-btn {
+          min-width: 100px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
         }
 
         .copy-btn.copied {
@@ -169,20 +327,17 @@ export const Flood: React.FC = () => {
           background-color: var(--color-emerald-glow);
         }
 
-        @media (max-width: 640px) {
-          .flood-section {
-            padding: 20px;
-          }
-          .copy-bubble-container {
+        @media (max-width: 768px) {
+          .copy-bubble-row {
             flex-direction: column;
             align-items: stretch;
-            gap: 10px;
+            gap: 12px;
+          }
+          .habbo-bubble::before, .habbo-bubble::after {
+            display: none;
           }
           .copy-btn {
-            align-self: flex-end;
-          }
-          .habbo-bubble::after {
-            display: none;
+            width: 100%;
           }
         }
       `}</style>

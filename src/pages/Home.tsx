@@ -28,6 +28,12 @@ export const Home: React.FC = () => {
     <div className="home-container">
       {/* Hero Section */}
       <section className="hero-section">
+        {/* Active duty pulsing status badge */}
+        <div className="status-badge-container">
+          <span className="status-dot"></span>
+          <span className="status-text font-pixel">CUARTEL ACTIVO · EN SERVICIO</span>
+        </div>
+
         <div className="hero-logo-wrapper">
           <img 
             src={habboService.getBadgeUrl('b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642')}
@@ -55,7 +61,7 @@ export const Home: React.FC = () => {
       {/* Alto Mando (Owners) Section */}
       <section className="alto-mando-section">
         <h2 className="section-heading">Alto mando</h2>
-        <p className="section-subtitle">Los dueños y fundadores del batallón.</p>
+        <p className="section-subtitle">Los dueños y fundadores del batallón. Haz clic en sus tarjetas para ver sus perfiles en Habbo.</p>
         
         <div className="alto-mando-grid">
           <a 
@@ -97,6 +103,42 @@ export const Home: React.FC = () => {
               <Trophy size={12} className="text-amber" /> Dueño
             </div>
           </a>
+        </div>
+      </section>
+
+      {/* Cuartel General Room Section */}
+      <section className="cuartel-section">
+        <h2 className="section-heading">Cuartel general</h2>
+        <p className="section-subtitle">Nuestras instalaciones principales dentro del hotel. Visítanos en vivo para comenzar tu entrenamiento.</p>
+        
+        <div className="cuartel-card card">
+          <div className="cuartel-image-wrapper">
+            <img 
+              src="/habbo_bmt_hq.png" 
+              alt="Cuartel General BMT" 
+              className="cuartel-img"
+            />
+            <div className="cuartel-overlay">
+              <span className="font-pixel overlay-tag">[✠] BMT HQ [✠]</span>
+            </div>
+          </div>
+          <div className="cuartel-info">
+            <h3 className="font-pixel text-gradient">¡ÚNETE A LAS FILAS!</h3>
+            <p>
+              Nuestra base táctica militar está equipada con sistemas avanzados de seguridad, zonas de reclutamiento y despachos de Estado Mayor. Aquí organizamos las guardias semanales, relevos y sesiones de pago seguras de cada domingo.
+            </p>
+            <p className="text-secondary font-pixel text-small">
+              📍 Propietario de la sala: Migue-lito13.-
+            </p>
+            <a 
+              href="https://www.habbo.es/hotel?room=147100" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary btn-lg-premium btn-cuartel-go"
+            >
+              Entrar al Cuartel General ➔
+            </a>
+          </div>
         </div>
       </section>
 
@@ -197,6 +239,13 @@ export const Home: React.FC = () => {
           display: flex;
           flex-direction: column;
           gap: 80px;
+          position: relative;
+          
+          /* Tactical monitor scanlines background effect */
+          background-image: 
+            radial-gradient(circle at 50% 10%, rgba(251, 191, 36, 0.04) 0%, transparent 60%),
+            linear-gradient(rgba(18, 18, 18, 0) 97%, rgba(255, 255, 255, 0.007) 97%);
+          background-size: 100% 100%, 100% 4px;
         }
         
         .hero-section {
@@ -207,6 +256,46 @@ export const Home: React.FC = () => {
           max-width: 800px;
           margin: 0 auto;
           padding: 40px 0 20px;
+        }
+
+        /* Pulsing active status dot */
+        .status-badge-container {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(74, 222, 128, 0.08);
+          border: 1px solid rgba(74, 222, 128, 0.25);
+          padding: 6px 14px;
+          border-radius: 9999px;
+          margin-bottom: 24px;
+          box-shadow: 0 0 15px rgba(74, 222, 128, 0.05);
+        }
+
+        .status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: #4ade80;
+          box-shadow: 0 0 8px #4ade80;
+          animation: pulseGlow 1.8s infinite;
+        }
+
+        .status-text {
+          font-size: 0.72rem;
+          color: #4ade80;
+          letter-spacing: 0.05em;
+          font-weight: 700;
+        }
+
+        @keyframes pulseGlow {
+          0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 8px #4ade80;
+          }
+          50% {
+            opacity: 0.3;
+            box-shadow: 0 0 2px #4ade80;
+          }
         }
 
         .hero-logo-wrapper {
@@ -313,7 +402,7 @@ export const Home: React.FC = () => {
         .owner-card:hover {
           border-color: var(--border-zinc-hover);
           transform: translateY(-2px);
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 8px 30px rgba(251, 191, 36, 0.15);
         }
 
         .owner-avatar-wrapper {
@@ -350,6 +439,101 @@ export const Home: React.FC = () => {
           padding: 4px 10px;
           border-radius: 9999px;
           border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        /* Cuartel General Room Section Styles */
+        .cuartel-card {
+          display: flex;
+          gap: 32px;
+          padding: 32px;
+          align-items: center;
+          background: linear-gradient(135deg, rgba(24, 24, 27, 0.6) 0%, rgba(39, 39, 42, 0.3) 100%);
+          border: 1px solid var(--border-zinc);
+          border-radius: var(--radius-lg);
+        }
+
+        @media (max-width: 820px) {
+          .cuartel-card {
+            flex-direction: column;
+            padding: 24px;
+            gap: 24px;
+          }
+        }
+
+        .cuartel-image-wrapper {
+          position: relative;
+          width: 100%;
+          max-width: 440px;
+          border-radius: var(--radius-md);
+          overflow: hidden;
+          border: 2px solid #18181b;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+          flex-shrink: 0;
+        }
+
+        .cuartel-img {
+          width: 100%;
+          display: block;
+          transition: transform 0.4s ease;
+        }
+
+        .cuartel-image-wrapper:hover .cuartel-img {
+          transform: scale(1.04);
+        }
+
+        .cuartel-overlay {
+          position: absolute;
+          top: 14px;
+          left: 14px;
+          background-color: rgba(0, 0, 0, 0.85);
+          border: 1px solid var(--color-amber);
+          padding: 4px 10px;
+          border-radius: 4px;
+        }
+
+        .overlay-tag {
+          font-size: 0.68rem;
+          color: var(--color-amber);
+          font-weight: bold;
+        }
+
+        .cuartel-info {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          flex-grow: 1;
+        }
+
+        .cuartel-info h3 {
+          font-size: 1.5rem;
+          font-weight: 900;
+          letter-spacing: -0.01em;
+        }
+
+        .cuartel-info p {
+          color: var(--text-secondary);
+          line-height: 1.6;
+          font-size: 0.95rem;
+        }
+
+        .text-small {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+
+        .btn-cuartel-go {
+          align-self: flex-start;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 8px;
+        }
+
+        @media (max-width: 820px) {
+          .btn-cuartel-go {
+            width: 100%;
+            justify-content: center;
+          }
         }
 
         /* Placas Section Styles */
