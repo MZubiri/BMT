@@ -16,7 +16,10 @@ async function runSetup() {
       { name: 'Migue-lito13.-', uniqueId: 'hhes-42f087b05449345e95f7ec4dd91dc7ee', role: 'OWNER', rank: 'Líder Dueño Supremo' },
       { name: '-lYeremi-', uniqueId: 'hhes-7235a7723ff14753e88e344a7723ff14', role: 'OWNER', rank: 'Líder Dueño Supremo' },
       { name: 'Alex-frezee', uniqueId: 'hhes-frezee-id-12345', role: 'OFFICER', rank: 'Oficial' },
-      { name: 'Guss', uniqueId: 'hhes-b30a20a7d20455ae279f49e39d5676f4', role: 'OWNER', rank: 'Ministro de Defensa' }
+      { name: 'Guss', uniqueId: 'hhes-b30a20a7d20455ae279f49e39d5676f4', role: 'OWNER', rank: 'Ministro de Defensa' },
+      { name: 'Ashleeeeyy', uniqueId: 'hhes-5d9f33c5e84d58e97b1df1ef169d1dba', role: 'OFFICER', rank: 'Secretario de Estado' },
+      { name: '...alma@.', uniqueId: 'hhes-d98383bbc26f42b9f24e2140c1fb9f9b', role: 'OFFICER', rank: 'Secretario Ejecutivo' },
+      { name: 'QIR', uniqueId: 'hhes-9894992606e9577df75342b2cb1f5656', role: 'OFFICER', rank: 'Tesorero Ejecutivo' }
     ];
 
     for (const m of coreMembers) {

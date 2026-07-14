@@ -104,6 +104,68 @@ export const Home: React.FC = () => {
             </div>
           </a>
         </div>
+
+        {/* Estado Mayor Sub-Section */}
+        <div className="estado-mayor-container" style={{ marginTop: '48px' }}>
+          <h3 className="section-subheading-central font-pixel text-gradient" style={{ textAlign: 'center', fontSize: '1.25rem', marginBottom: '24px', letterSpacing: '0.05em' }}>
+            [✠] ESTADO MAYOR [✠]
+          </h3>
+          <div className="estado-mayor-grid">
+            <a 
+              href="https://www.habbo.es/profile/Ashleeeeyy" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="officer-card-small"
+              style={{ textDecoration: 'none' }}
+            >
+              <div className="officer-avatar-wrapper-small">
+                <img 
+                  src={habboService.getAvatarUrl('Ashleeeeyy', { action: 'std', gesture: 'sml' })} 
+                  alt="Ashleeeeyy" 
+                  className="officer-avatar-img-small"
+                />
+              </div>
+              <h4 className="officer-name-small">Ashleeeeyy</h4>
+              <p className="officer-role-small font-pixel">Secretario de Estado</p>
+            </a>
+
+            <a 
+              href="https://www.habbo.es/profile/...alma@." 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="officer-card-small"
+              style={{ textDecoration: 'none' }}
+            >
+              <div className="officer-avatar-wrapper-small">
+                <img 
+                  src={habboService.getAvatarUrl('...alma@.', { action: 'std', gesture: 'sml' })} 
+                  alt="...alma@." 
+                  className="officer-avatar-img-small"
+                />
+              </div>
+              <h4 className="officer-name-small">...alma@.</h4>
+              <p className="officer-role-small font-pixel">Secretario Ejecutivo</p>
+            </a>
+
+            <a 
+              href="https://www.habbo.es/profile/QIR" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="officer-card-small"
+              style={{ textDecoration: 'none' }}
+            >
+              <div className="officer-avatar-wrapper-small">
+                <img 
+                  src={habboService.getAvatarUrl('QIR', { action: 'std', gesture: 'sml' })} 
+                  alt="QIR" 
+                  className="officer-avatar-img-small"
+                />
+              </div>
+              <h4 className="officer-name-small">QIR</h4>
+              <p className="officer-role-small font-pixel">Tesorero Ejecutivo</p>
+            </a>
+          </div>
+        </div>
       </section>
 
       {/* Cuartel General Room Section */}
@@ -138,6 +200,48 @@ export const Home: React.FC = () => {
             >
               Entrar al Cuartel General ➔
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Club BMT Section */}
+      <section className="club-section">
+        <h2 className="section-heading">Club <span className="text-gradient">[BMT]</span></h2>
+        <p className="section-subtitle">El club VIP exclusivo para oficiales y soldados destacados. Adquiere tu membresía y obtén beneficios únicos en el cuartel.</p>
+        
+        <div className="club-container card">
+          <div className="club-info-card">
+            <div className="club-badge-icon">
+              <Trophy className="text-amber" size={32} />
+            </div>
+            <div className="club-details">
+              <h3 className="font-pixel">BENEFICIOS DE MEMBRESÍA</h3>
+              <ul className="club-benefits-list">
+                <li>
+                  <span className="bullet-gold">✦</span> 
+                  <strong>Uniforme Personalizado:</strong> Diseña y utiliza tu propio uniforme dentro de la base (con aprobación previa).
+                </li>
+                <li>
+                  <span className="bullet-gold">✦</span> 
+                  <strong>Guarda Paga de 24 Horas:</strong> Si no puedes retirar tu paga de nómina el domingo, la guardamos por 24 horas.
+                </li>
+                <li>
+                  <span className="bullet-gold">✦</span> 
+                  <strong>Colores Normales de Chat:</strong> Permiso para utilizar colores y estilos normales de burbujas en el chat de la sala.
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="club-price-card">
+            <div className="price-tag font-pixel">35c</div>
+            <p className="price-desc font-pixel">POR MES</p>
+            <div className="divider"></div>
+            <p className="price-instructions">
+              Para adquirir la membresía, comunícate en vivo en el cuartel con los dueños del batallón autorizados.
+            </p>
+            <Link to="/donations" className="btn btn-secondary btn-sm" style={{ width: '100%', textAlign: 'center', marginTop: '12px', padding: '8px 16px', fontSize: '0.8rem' }}>
+              Ver encargados autorizados
+            </Link>
           </div>
         </div>
       </section>
@@ -665,6 +769,178 @@ export const Home: React.FC = () => {
           font-size: 0.88rem;
           color: var(--text-secondary);
           line-height: 1.45;
+        }
+
+        /* Estado Mayor Styles */
+        .estado-mayor-grid {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+
+        .officer-card-small {
+          background-color: rgba(39, 39, 42, 0.4);
+          border: 1px solid var(--border-zinc);
+          border-radius: var(--radius-md);
+          padding: 16px 24px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 210px;
+          transition: var(--transition-smooth);
+        }
+
+        .officer-card-small:hover {
+          border-color: rgba(251, 191, 36, 0.25);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(251, 191, 36, 0.08);
+        }
+
+        .officer-avatar-wrapper-small {
+          width: 80px;
+          height: 100px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          margin-bottom: 8px;
+          position: relative;
+        }
+
+        .officer-avatar-img-small {
+          transform: scale(1.3) translateY(8px);
+          image-rendering: pixelated;
+        }
+
+        .officer-name-small {
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin-bottom: 4px;
+        }
+
+        .officer-role-small {
+          font-size: 0.68rem;
+          font-weight: 700;
+          color: var(--color-amber);
+          letter-spacing: 0.02em;
+        }
+
+        /* Club BMT Styles */
+        .club-container {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          border: 1px solid rgba(251, 191, 36, 0.15);
+          background: linear-gradient(135deg, rgba(39, 39, 42, 0.3) 0%, rgba(24, 24, 27, 0.5) 100%);
+          border-radius: var(--radius-lg);
+          overflow: hidden;
+          box-shadow: 0 10px 40px -10px rgba(251, 191, 36, 0.03);
+        }
+
+        @media (max-width: 768px) {
+          .club-container {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        .club-info-card {
+          padding: 40px;
+          display: flex;
+          gap: 24px;
+        }
+
+        @media (max-width: 600px) {
+          .club-info-card {
+            flex-direction: column;
+            padding: 24px;
+            gap: 16px;
+          }
+        }
+
+        .club-badge-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 64px;
+          height: 64px;
+          background-color: var(--color-amber-glow);
+          border-radius: var(--radius-md);
+          border: 1px solid rgba(251, 191, 36, 0.2);
+          flex-shrink: 0;
+        }
+
+        .club-details h3 {
+          font-size: 0.95rem;
+          color: var(--color-amber);
+          margin-bottom: 16px;
+          letter-spacing: 0.05em;
+        }
+
+        .club-benefits-list {
+          list-style: none;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .club-benefits-list li {
+          font-size: 0.88rem;
+          color: var(--text-secondary);
+          line-height: 1.45;
+        }
+
+        .bullet-gold {
+          color: var(--color-amber);
+          margin-right: 8px;
+          font-weight: bold;
+        }
+
+        .club-price-card {
+          padding: 40px;
+          background-color: rgba(24, 24, 27, 0.8);
+          border-left: 1px solid rgba(255, 255, 255, 0.05);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+        }
+
+        @media (max-width: 768px) {
+          .club-price-card {
+            border-left: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 32px;
+          }
+        }
+
+        .club-price-card .price-tag {
+          font-size: 3rem;
+          font-weight: 900;
+          color: var(--color-amber);
+          line-height: 1;
+        }
+
+        .club-price-card .price-desc {
+          font-size: 0.72rem;
+          color: var(--text-muted);
+          margin-top: 4px;
+          letter-spacing: 0.1em;
+        }
+
+        .club-price-card .divider {
+          width: 60px;
+          height: 1px;
+          background-color: var(--border-zinc);
+          margin: 16px 0;
+        }
+
+        .club-price-card .price-instructions {
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          line-height: 1.4;
         }
       `}</style>
     </div>
