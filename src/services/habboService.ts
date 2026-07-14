@@ -87,32 +87,26 @@ export const habboService = {
     const name = (rankName || '').toLowerCase();
     
     // Estado Mayor
-    if (name.includes('tesorero') || name.includes('secretario') || name.includes('ministro')) {
-      return 'b07244s01134s36047s44244t52114ef2302532c051c38ee561e6bf57d9d42';
+    if (name.includes('tesorero') || name.includes('secretario') || name.includes('ministro') || name.includes('estado mayor')) {
+      return 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642';
     }
     // Generales
     if (name.includes('gral') || name.includes('general') || name.includes('ejército')) {
-      return 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642';
+      return 'b09044s02135s36047s44044t27114f40bb88ea9beaa9d10de4e9af2eaea79';
     }
     // Oficiales Superiores
     if (name.includes('mayor') || name.includes('cmdt') || name.includes('coronel') || name.includes('dir')) {
-      if (name.includes('coronel oficial')) {
-        return 'b09104s02135s36047s44104t2711491934527c2d1d1e021e0a14fce6a11f7'; // Oficiales
-      }
-      return 'b09044s02135s36047s44044t27114f40bb88ea9beaa9d10de4e9af2eaea79';
+      return 'b09104s02135s36047s44104t2711491934527c2d1d1e021e0a14fce6a11f7';
     }
     // Oficiales
     if (name.includes('teniente') || name.includes('alférez') || name.includes('capitán') || name.includes('navío') || name.includes('corbeta')) {
-      if (name.includes('subteniente')) {
-        return 'b09024s02135s36047s44024t271148598db7ba6558ee51c564e76ef038622'; // Sub-Oficiales
-      }
-      return 'b09104s02135s36047s44104t2711491934527c2d1d1e021e0a14fce6a11f7';
-    }
-    // Sub-Oficiales
-    if (name.includes('cabo') || name.includes('sargento') || name.includes('brigada') || name.includes('sgto')) {
       return 'b09024s02135s36047s44024t271148598db7ba6558ee51c564e76ef038622';
     }
+    // Sub-Oficiales
+    if (name.includes('cabo') || name.includes('sargento') || name.includes('brigada') || name.includes('sgto') || name.includes('subteniente')) {
+      return 'b09054s02135s36047s44054t27114cd31c00da2fd4753e88e344a7723ff14';
+    }
     // Reclutas (default)
-    return 'b09054s02135s36047s44054t27114cd31c00da2fd4753e88e344a7723ff14';
+    return 'b09134s02155s36047s44134t27114e862510ff77289cfa52c2552470f2105';
   }
 };
