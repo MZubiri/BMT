@@ -30,7 +30,14 @@ export const Donations: React.FC = () => {
       {/* Officers Grid */}
       <div className="grid-3">
         {OFFICERS.map((officer, index) => (
-          <div key={index} className="officer-card card">
+          <a 
+            key={index} 
+            href={`https://www.habbo.es/profile/${officer.name}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="officer-card card"
+            style={{ textDecoration: 'none' }}
+          >
             <div className="avatar-wrapper">
               <img
                 src={habboService.getAvatarUrl(officer.name, { size: 'l', direction: 2, headDirection: 3, action: 'std', gesture: 'sml' })}
@@ -43,7 +50,7 @@ export const Donations: React.FC = () => {
               <h3 className="officer-name">{officer.name}</h3>
               <p className="officer-role">{officer.role}</p>
             </div>
-          </div>
+          </a>
         ))}
       </div>
 

@@ -58,7 +58,13 @@ export const Home: React.FC = () => {
         <p className="section-subtitle">Los dueños y fundadores del batallón.</p>
         
         <div className="alto-mando-grid">
-          <div className="owner-card">
+          <a 
+            href="https://www.habbo.es/profile/Migue-lito13.-" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="owner-card"
+            style={{ textDecoration: 'none' }}
+          >
             <div className="owner-avatar-wrapper">
               <img 
                 src={habboService.getAvatarUrl('Migue-lito13.-', { action: 'std', gesture: 'sml' })} 
@@ -70,9 +76,15 @@ export const Home: React.FC = () => {
             <div className="owner-role-pill">
               <Trophy size={12} className="text-amber" /> Dueño
             </div>
-          </div>
+          </a>
 
-          <div className="owner-card">
+          <a 
+            href="https://www.habbo.es/profile/-lYeremi-" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="owner-card"
+            style={{ textDecoration: 'none' }}
+          >
             <div className="owner-avatar-wrapper">
               <img 
                 src={habboService.getAvatarUrl('-lYeremi-', { action: 'std', gesture: 'sml' })} 
@@ -84,7 +96,7 @@ export const Home: React.FC = () => {
             <div className="owner-role-pill">
               <Trophy size={12} className="text-amber" /> Dueño
             </div>
-          </div>
+          </a>
         </div>
       </section>
 
