@@ -9,9 +9,9 @@ interface DonorOfficer {
 
 const OFFICERS: DonorOfficer[] = [
   { name: 'Migue-lito13.-', role: 'Encargado oficial' },
-  { name: '-|Yeremi-', role: 'Encargado oficial' },
+  { name: '-lYeremi-', role: 'Encargado oficial' },
   { name: '...alma@.', role: 'Encargado oficial' },
-  { name: 'Ashleeeyy', role: 'Encargado oficial' }
+  { name: 'Ashleeyy', role: 'Encargado oficial' }
 ];
 
 export const Donations: React.FC = () => {
