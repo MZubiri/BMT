@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link, Outlet } from 'react-router-dom';
-import { Clock, Users, DollarSign, LogOut } from 'lucide-react';
+import { Clock, Users, DollarSign, LogOut, MessageSquare, ShieldCheck } from 'lucide-react';
 import { habboService } from '../../services/habboService';
 
 export interface UserSession {
@@ -76,6 +76,16 @@ export const DashboardLayout: React.FC = () => {
                 <DollarSign size={18} />
                 <span>Caja de Pagas</span>
               </Link>
+              <Link to="/flood" className="sidebar-link">
+                <MessageSquare size={18} />
+                <span>Floods</span>
+              </Link>
+              {session.role === 'OWNER' && (
+                <Link to="/dashboard/permissions" className={`sidebar-link ${location.pathname === '/dashboard/permissions' ? 'active' : ''}`}>
+                  <ShieldCheck size={18} />
+                  <span>Permisos</span>
+                </Link>
+              )}
             </>
           )}
         </nav>

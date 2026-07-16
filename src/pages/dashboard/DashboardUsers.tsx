@@ -14,20 +14,24 @@ interface Member {
   approved?: number;
 }
 
-const MILITARY_RANKS = [
-  // Reclutas
-  'Grumete', 'Guardiamarina', 'Recluta', 'Cadete 1er Año', 'Cadete 2do Año', 'Cadete 3er Año', 'Cadete 4to Año', 'Instr. de Entren.',
-  // Sub-Oficiales
-  'Cabo', 'Sargento', 'Sargento Primero', 'Sgto. de Artilleria', 'Sargento Mayor', 'Brigada', 'Subteniente', 'Subteniente Mayor',
-  // Oficiales
-  '2do Teniente', '1er Teniente', 'Alférez', 'Alférez de Fragata', 'Coronel Oficial', 'Alférez de Navío', 'Capitán', 'Teniente de Navío', 'Cap. de Corbeta',
-  // Oficiales Superiores
-  'Mayor', 'Mayor Ejecutivo', 'Teniente Coronel', 'Capitán de Navío', 'Coronel', 'Cmdt. de División', 'Dir. de Invest.', 'Director de RRHH',
-  // Generales
-  'Gral. de Brigada', 'Gral. de División', 'Teniente Gral.', 'Gral. de Ejército', 'Capitán Gral.', 'Mayor Gral.',
-  // Estado Mayor
-  'Tesorero Ejecutivo', 'Secretario de Estado', 'Secretario Ejecutivo', 'Ministro de Defensa', 'Ministro de Justicia'
-];
+
+
+const CARGO_RANKS: Record<string, string[]> = {
+  'Reclutas': ['Grumete', 'Guardiamarina', 'Recluta', 'Cadete 1er Año', 'Cadete 2do Año', 'Cadete 3er Año', 'Cadete 4to Año', 'Instr. de Entren.'],
+  'Sub-Oficiales': ['Cabo', 'Sargento', 'Sargento Primero', 'Sgto. de Artilleria', 'Sargento Mayor', 'Brigada', 'Subteniente', 'Subteniente Mayor'],
+  'Oficiales': ['2do Teniente', '1er Teniente', 'Alférez', 'Alférez de Fragata', 'Coronel Oficial', 'Alférez de Navío', 'Capitán', 'Teniente de Navío', 'Cap. de Corbeta'],
+  'Oficiales Superiores': ['Mayor', 'Mayor Ejecutivo', 'Teniente Coronel', 'Capitán de Navío', 'Coronel', 'Cmdt. de División', 'Dir. de Invest.', 'Director de RRHH'],
+  'Generales': ['Gral. de Brigada', 'Gral. de División', 'Teniente Gral.', 'Gral. de Ejército', 'Capitán Gral.', 'Mayor Gral.'],
+  'Estado Mayor': ['Tesorero Ejecutivo', 'Secretario de Estado', 'Secretario Ejecutivo', 'Ministro de Defensa', 'Ministro de Justicia'],
+  'Dueño': ['Líder Dueño Supremo']
+};
+
+const getCargoForRank = (rankName: string): string => {
+  for (const [cargo, ranks] of Object.entries(CARGO_RANKS)) {
+    if (ranks.includes(rankName)) return cargo;
+  }
+  return 'Reclutas'; // default fallback
+};
 
 export const DashboardUsers: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'members' | 'pending' | 'add'>('members');
@@ -37,7 +41,7 @@ export const DashboardUsers: React.FC = () => {
   
   // Form state
   const [newMemberName, setNewMemberName] = useState('');
-  const [newMemberRole, setNewMemberRole] = useState<'OWNER' | 'OFFICER' | 'MEMBER'>('MEMBER');
+  const [newMemberCargo, setNewMemberCargo] = useState('Reclutas');
   const [newMemberRank, setNewMemberRank] = useState('Grumete');
   
   const [isLoading, setIsLoading] = useState(false);
@@ -114,12 +118,18 @@ export const DashboardUsers: React.FC = () => {
     }
 
     try {
+      const getRoleForCargo = (cargo: string): 'OWNER' | 'OFFICER' | 'MEMBER' => {
+        if (cargo === 'Dueño') return 'OWNER';
+        if (['Estado Mayor', 'Generales', 'Oficiales Superiores', 'Oficiales'].includes(cargo)) return 'OFFICER';
+        return 'MEMBER';
+      };
+
       const response = await fetch('/api/members', {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
           username: targetName,
-          role: newMemberRole,
+          role: getRoleForCargo(newMemberCargo),
           rankName: newMemberRank
         })
       });
@@ -132,7 +142,7 @@ export const DashboardUsers: React.FC = () => {
       const newMember = await response.json();
       setMessage({ text: `Miembro "${newMember.name}" agregado con éxito.`, type: 'success' });
       setNewMemberName('');
-      setNewMemberRole('MEMBER');
+      setNewMemberCargo('Reclutas');
       setNewMemberRank('Grumete');
       refreshMembers();
       setActiveTab('members');
@@ -177,18 +187,7 @@ export const DashboardUsers: React.FC = () => {
       .catch(err => alert(err.message));
   };
 
-  const handleChangeRole = (memberId: number, newRole: 'OWNER' | 'OFFICER' | 'MEMBER') => {
-    fetch(`/api/members/${memberId}/role`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify({ role: newRole })
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Error al cambiar el cargo');
-        refreshMembers();
-      })
-      .catch(err => alert(err.message));
-  };
+
 
   const handleChangeRank = (memberId: number, newRank: string) => {
     fetch(`/api/members/${memberId}/rank`, {
@@ -355,13 +354,17 @@ export const DashboardUsers: React.FC = () => {
                       </td>
                       <td>
                         <select
-                          value={member.role}
-                          onChange={(e) => handleChangeRole(member.id, e.target.value as any)}
+                          value={getCargoForRank(member.rankName || 'Grumete')}
+                          onChange={(e) => {
+                            const newCargo = e.target.value;
+                            const defaultRank = CARGO_RANKS[newCargo][0];
+                            handleChangeRank(member.id, defaultRank);
+                          }}
                           className="role-selector"
                         >
-                          <option value="MEMBER">Militar</option>
-                          <option value="OFFICER">Oficial</option>
-                          <option value="OWNER">Dueño</option>
+                          {Object.keys(CARGO_RANKS).map(cargo => (
+                            <option key={cargo} value={cargo}>{cargo}</option>
+                          ))}
                         </select>
                       </td>
                       <td>
@@ -376,7 +379,7 @@ export const DashboardUsers: React.FC = () => {
                             onChange={(e) => handleChangeRank(member.id, e.target.value)}
                             className="role-selector"
                           >
-                            {MILITARY_RANKS.map(r => (
+                            {(CARGO_RANKS[getCargoForRank(member.rankName || 'Grumete')] || []).map(r => (
                               <option key={r} value={r}>{r}</option>
                             ))}
                           </select>
@@ -514,17 +517,21 @@ export const DashboardUsers: React.FC = () => {
 
               <div className="form-group-row">
                 <div className="form-group flex-1">
-                  <label htmlFor="memberRole" className="form-label">Cargo Administrativo</label>
+                  <label htmlFor="memberCargo" className="form-label">Cargo</label>
                   <select
-                    id="memberRole"
-                    value={newMemberRole}
-                    onChange={(e) => setNewMemberRole(e.target.value as any)}
+                    id="memberCargo"
+                    value={newMemberCargo}
+                    onChange={(e) => {
+                      const newCargo = e.target.value;
+                      setNewMemberCargo(newCargo);
+                      setNewMemberRank(CARGO_RANKS[newCargo][0]);
+                    }}
                     className="form-input"
                     disabled={isLoading}
                   >
-                    <option value="MEMBER">Militar (Estándar)</option>
-                    <option value="OFFICER">Oficial (Admin)</option>
-                    <option value="OWNER">Dueño (Todo)</option>
+                    {Object.keys(CARGO_RANKS).map(cargo => (
+                      <option key={cargo} value={cargo}>{cargo}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -537,7 +544,7 @@ export const DashboardUsers: React.FC = () => {
                     className="form-input"
                     disabled={isLoading}
                   >
-                    {MILITARY_RANKS.map(r => (
+                    {(CARGO_RANKS[newMemberCargo] || []).map(r => (
                       <option key={r} value={r}>{r}</option>
                     ))}
                   </select>

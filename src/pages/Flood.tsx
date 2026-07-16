@@ -114,7 +114,7 @@ export const Flood: React.FC = () => {
     }
   };
 
-  const showAdminControls = session?.role === 'OWNER' || session?.role === 'OFFICER';
+  const showAdminControls = session?.role === 'OWNER';
 
   const defenseFloods = floods.filter(f => f.category === 'defense');
   const welcomeFloods = floods.filter(f => f.category === 'welcome');

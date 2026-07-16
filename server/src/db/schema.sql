@@ -63,3 +63,17 @@ INSERT INTO floods (id, category, content) VALUES
 (3, 'welcome', '♣ ¡Bienvenidos a BMT™! [★] Paga diaria de $7 por 1 hora y 30 minutos, más ascenso a Recluta. ¡Ven y te doy empleo! ♥'),
 (4, 'welcome', '★ MI VIDA ERA GRIS, PERO GRACIAS A [BMT] PUDE COMPRAR COLORES. [BMT] PAGA SEMANAL. ¡ÚNETE! ♧♧♧♧')
 ON DUPLICATE KEY UPDATE category=VALUES(category), content=VALUES(content);
+
+CREATE TABLE IF NOT EXISTS permissions (
+  action_key VARCHAR(100) PRIMARY KEY,
+  min_role ENUM('OWNER', 'OFFICER', 'MEMBER') NOT NULL DEFAULT 'OWNER'
+);
+
+-- Seed Data para Permisos
+INSERT INTO permissions (action_key, min_role) VALUES
+('edit_floods', 'OWNER'),
+('manage_registrations', 'OFFICER'),
+('manage_members', 'OFFICER'),
+('manage_duties', 'OFFICER'),
+('manage_paybox', 'OWNER')
+ON DUPLICATE KEY UPDATE min_role=VALUES(min_role);

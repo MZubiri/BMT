@@ -38,6 +38,22 @@ function verifyPassword(password: string, storedHash: string): boolean {
 }
 
 // -------------------------------------------------------------
+// Permissions System
+// -------------------------------------------------------------
+async function checkPermission(userRole: string, actionKey: string): Promise<boolean> {
+  try {
+    const rows = await query<any[]>('SELECT min_role FROM permissions WHERE action_key = ?', [actionKey]);
+    if (rows.length === 0) return userRole === 'OWNER';
+    const minRole = rows[0].min_role;
+    
+    const roleHierarchy: Record<string, number> = { 'OWNER': 3, 'OFFICER': 2, 'MEMBER': 1 };
+    return (roleHierarchy[userRole] || 0) >= (roleHierarchy[minRole] || 0);
+  } catch (e) {
+    return userRole === 'OWNER';
+  }
+}
+
+// -------------------------------------------------------------
 // JWT Middleware
 // -------------------------------------------------------------
 function authenticateToken(req: any, res: any, next: any) {
@@ -303,7 +319,7 @@ app.post('/api/auth/bypass', async (req, res) => {
 // Admin Pending Approvals API
 // -------------------------------------------------------------
 app.get('/api/admin/pending', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'manage_registrations')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   try {
@@ -315,7 +331,7 @@ app.get('/api/admin/pending', authenticateToken, async (req: any, res) => {
 });
 
 app.post('/api/admin/approve/:id', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'manage_registrations')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -328,7 +344,7 @@ app.post('/api/admin/approve/:id', authenticateToken, async (req: any, res) => {
 });
 
 app.post('/api/admin/reject/:id', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'manage_registrations')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -337,6 +353,37 @@ app.post('/api/admin/reject/:id', authenticateToken, async (req: any, res) => {
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: 'Error al rechazar solicitud' });
+  }
+});
+
+// -------------------------------------------------------------
+// Admin Permissions Config API (OWNER only)
+// -------------------------------------------------------------
+app.get('/api/admin/permissions', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER') {
+    return res.status(403).json({ error: 'Acceso denegado. Solo el Dueño puede gestionar permisos.' });
+  }
+  try {
+    const permissions = await query('SELECT * FROM permissions ORDER BY action_key ASC');
+    return res.json(permissions);
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al consultar los permisos' });
+  }
+});
+
+app.put('/api/admin/permissions', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER') {
+    return res.status(403).json({ error: 'Acceso denegado. Solo el Dueño puede gestionar permisos.' });
+  }
+  const { actionKey, minRole } = req.body;
+  if (!actionKey || !minRole) {
+    return res.status(400).json({ error: 'Falta la acción o el rol mínimo' });
+  }
+  try {
+    await query('UPDATE permissions SET min_role = ? WHERE action_key = ?', [minRole, actionKey]);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al actualizar el permiso' });
   }
 });
 
@@ -353,7 +400,7 @@ app.get('/api/floods', async (req, res) => {
 });
 
 app.post('/api/floods', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'edit_floods')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { category, content } = req.body;
@@ -369,7 +416,7 @@ app.post('/api/floods', authenticateToken, async (req: any, res) => {
 });
 
 app.put('/api/floods/:id', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'edit_floods')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -386,7 +433,7 @@ app.put('/api/floods/:id', authenticateToken, async (req: any, res) => {
 });
 
 app.delete('/api/floods/:id', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'edit_floods')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -411,7 +458,7 @@ app.get('/api/members', async (req, res) => {
 });
 
 app.post('/api/members', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { username, role, rankName } = req.body;
@@ -438,7 +485,7 @@ app.post('/api/members', authenticateToken, async (req: any, res) => {
 });
 
 app.put('/api/members/:id/role', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -454,23 +501,43 @@ app.put('/api/members/:id/role', authenticateToken, async (req: any, res) => {
 });
 
 app.put('/api/members/:id/rank', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
   const { rankName } = req.body;
   if (!rankName) return res.status(400).json({ error: 'Falta el rango' });
 
+  // Map rank to role automatically
+  const owners = ['Líder Dueño Supremo', 'Dueño Supremo', 'Dueño'];
+  const officers = [
+    // Oficiales
+    '2do Teniente', '1er Teniente', 'Alférez', 'Alférez de Fragata', 'Coronel Oficial', 'Alférez de Navío', 'Capitán', 'Teniente de Navío', 'Cap. de Corbeta',
+    // Oficiales Superiores
+    'Mayor', 'Mayor Ejecutivo', 'Teniente Coronel', 'Capitán de Navío', 'Coronel', 'Cmdt. de División', 'Dir. de Invest.', 'Director de RRHH',
+    // Generales
+    'Gral. de Brigada', 'Gral. de División', 'Teniente Gral.', 'Gral. de Ejército', 'Capitán Gral.', 'Mayor Gral.',
+    // Estado Mayor
+    'Tesorero Ejecutivo', 'Secretario de Estado', 'Secretario Ejecutivo', 'Ministro de Defensa', 'Ministro de Justicia'
+  ];
+  
+  let mappedRole: 'OWNER' | 'OFFICER' | 'MEMBER' = 'MEMBER';
+  if (owners.some(o => rankName.toLowerCase().includes(o.toLowerCase()))) {
+    mappedRole = 'OWNER';
+  } else if (officers.some(o => rankName.toLowerCase().includes(o.toLowerCase()))) {
+    mappedRole = 'OFFICER';
+  }
+
   try {
-    await query('UPDATE members SET rank_name = ? WHERE id = ?', [rankName, id]);
+    await query('UPDATE members SET rank_name = ?, role = ? WHERE id = ?', [rankName, mappedRole, id]);
     return res.json({ success: true });
   } catch (err) {
-    return res.status(500).json({ error: 'Error al actualizar el rango' });
+    return res.status(500).json({ error: 'Error al actualizar el rango y cargo' });
   }
 });
 
 app.put('/api/members/:id/reset-password', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -487,7 +554,7 @@ app.put('/api/members/:id/reset-password', authenticateToken, async (req: any, r
 });
 
 app.delete('/api/members/:id', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+  if (!await checkPermission(req.user.role, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -499,7 +566,10 @@ app.delete('/api/members/:id', authenticateToken, async (req: any, res) => {
   }
 });
 
-app.post('/api/members/sync-all', async (req, res) => {
+app.post('/api/members/sync-all', authenticateToken, async (req: any, res) => {
+  if (!await checkPermission(req.user.role, 'manage_members')) {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
   // Trigger full sync in background to avoid timeout
   syncService.syncAllMembers();
   return res.status(202).json({ message: 'Sincronización general iniciada en segundo plano.' });
@@ -539,10 +609,9 @@ app.get('/api/duties/me', authenticateToken, async (req: any, res) => {
 app.post('/api/duties/start', authenticateToken, async (req: any, res) => {
   const { memberId, note } = req.body;
   
-  // Officers can start duties for others, standard members only for themselves
   const targetMemberId = memberId ? Number(memberId) : req.user.id;
   
-  if (targetMemberId !== req.user.id && req.user.role === 'MEMBER') {
+  if (targetMemberId !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
     return res.status(403).json({ error: 'No tienes permiso para iniciar el servicio de otro miembro' });
   }
 
@@ -572,7 +641,7 @@ app.post('/api/duties/:id/pause', authenticateToken, async (req: any, res) => {
     const [duty] = await query<any[]>('SELECT * FROM active_duties WHERE id = ?', [id]);
     if (!duty) return res.status(404).json({ error: 'Servicio no encontrado' });
 
-    if (duty.member_id !== req.user.id && req.user.role === 'MEMBER') {
+    if (duty.member_id !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
       return res.status(403).json({ error: 'No tienes permiso para modificar este servicio' });
     }
 
@@ -599,7 +668,7 @@ app.post('/api/duties/:id/resume', authenticateToken, async (req: any, res) => {
     const [duty] = await query<any[]>('SELECT * FROM active_duties WHERE id = ?', [id]);
     if (!duty) return res.status(404).json({ error: 'Servicio no encontrado' });
 
-    if (duty.member_id !== req.user.id && req.user.role === 'MEMBER') {
+    if (duty.member_id !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
       return res.status(403).json({ error: 'No tienes permiso para modificar este servicio' });
     }
 
@@ -624,7 +693,7 @@ app.post('/api/duties/:id/terminate', authenticateToken, async (req: any, res) =
     const [duty] = await query<any[]>('SELECT * FROM active_duties WHERE id = ?', [id]);
     if (!duty) return res.status(404).json({ error: 'Servicio no encontrado' });
 
-    if (duty.member_id !== req.user.id && req.user.role === 'MEMBER') {
+    if (duty.member_id !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
       return res.status(403).json({ error: 'No tienes permiso para finalizar este servicio' });
     }
 
@@ -671,7 +740,7 @@ app.post('/api/duties/:id/cancel', authenticateToken, async (req: any, res) => {
     const [duty] = await query<any[]>('SELECT * FROM active_duties WHERE id = ?', [id]);
     if (!duty) return res.status(404).json({ error: 'Servicio no encontrado' });
 
-    if (duty.member_id !== req.user.id && req.user.role === 'MEMBER') {
+    if (duty.member_id !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
       return res.status(403).json({ error: 'No tienes permiso para cancelar este servicio' });
     }
 
@@ -686,7 +755,7 @@ app.post('/api/duties/:id/cancel', authenticateToken, async (req: any, res) => {
 // Payroll API (Protected for Officers/Owners)
 // -------------------------------------------------------------
 app.post('/api/pay/reset', authenticateToken, async (req: any, res) => {
-  if (req.user.role === 'MEMBER') {
+  if (!await checkPermission(req.user.role, 'manage_paybox')) {
     return res.status(403).json({ error: 'No tienes permiso para reiniciar las nóminas' });
   }
 
