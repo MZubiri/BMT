@@ -156,40 +156,38 @@ export const Flood: React.FC = () => {
                 <div className="habbo-bubble habbo-bubble-white font-habbo">
                   {item.content}
                 </div>
-                <div className="btn-relative-container">
+                <div className="action-buttons-group">
                   {activeBubble === item.id && (
                     <div className="floating-copied-bubble font-pixel">
                       ¡Copiado! o/
                     </div>
                   )}
-                  <div className="action-buttons-group">
-                    <button
-                      onClick={() => handleCopy(item.content, item.id)}
-                      className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
-                      title="Copiar al portapapeles"
-                    >
-                      {copiedId === item.id ? <Check size={14} className="text-emerald" /> : <Copy size={14} />}
-                      <span>{copiedId === item.id ? 'Copiado' : 'Copiar'}</span>
-                    </button>
-                    {showAdminControls && (
-                      <>
-                        <button 
-                          onClick={() => handleOpenEdit(item)} 
-                          className="copy-btn edit-action-btn"
-                          title="Editar"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(item.id)} 
-                          className="copy-btn delete-action-btn"
-                          title="Eliminar"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => handleCopy(item.content, item.id)}
+                    className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
+                    title="Copiar al portapapeles"
+                  >
+                    {copiedId === item.id ? <Check size={14} className="text-emerald" /> : <Copy size={14} />}
+                    <span>{copiedId === item.id ? 'Copiado' : 'Copiar'}</span>
+                  </button>
+                  {showAdminControls && (
+                    <>
+                      <button 
+                        onClick={() => handleOpenEdit(item)} 
+                        className="action-icon-btn"
+                        title="Editar"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(item.id)} 
+                        className="action-icon-btn delete-btn"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -220,40 +218,38 @@ export const Flood: React.FC = () => {
                 <div className="habbo-bubble habbo-bubble-yellow font-habbo">
                   {item.content}
                 </div>
-                <div className="btn-relative-container">
+                <div className="action-buttons-group">
                   {activeBubble === item.id && (
                     <div className="floating-copied-bubble font-pixel">
                       ¡Copiado! o/
                     </div>
                   )}
-                  <div className="action-buttons-group">
-                    <button
-                      onClick={() => handleCopy(item.content, item.id)}
-                      className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
-                      title="Copiar al portapapeles"
-                    >
-                      {copiedId === item.id ? <Check size={14} className="text-emerald" /> : <Copy size={14} />}
-                      <span>{copiedId === item.id ? 'Copiado' : 'Copiar'}</span>
-                    </button>
-                    {showAdminControls && (
-                      <>
-                        <button 
-                          onClick={() => handleOpenEdit(item)} 
-                          className="copy-btn edit-action-btn"
-                          title="Editar"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(item.id)} 
-                          className="copy-btn delete-action-btn"
-                          title="Eliminar"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => handleCopy(item.content, item.id)}
+                    className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
+                    title="Copiar al portapapeles"
+                  >
+                    {copiedId === item.id ? <Check size={14} className="text-emerald" /> : <Copy size={14} />}
+                    <span>{copiedId === item.id ? 'Copiado' : 'Copiar'}</span>
+                  </button>
+                  {showAdminControls && (
+                    <>
+                      <button 
+                        onClick={() => handleOpenEdit(item)} 
+                        className="action-icon-btn"
+                        title="Editar"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(item.id)} 
+                        className="action-icon-btn delete-btn"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -364,9 +360,26 @@ export const Flood: React.FC = () => {
 
         .copy-bubble-row {
           display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: var(--radius-lg);
+          padding: 16px;
+          transition: var(--transition-smooth);
+        }
+
+        .copy-bubble-row:hover {
+          background: rgba(255, 255, 255, 0.04);
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .action-buttons-group {
+          display: flex;
           align-items: center;
-          gap: 20px;
-          justify-content: space-between;
+          justify-content: flex-end;
+          gap: 8px;
+          margin-top: 4px;
         }
 
         /* Habbo dialog bubble style */
@@ -377,18 +390,17 @@ export const Flood: React.FC = () => {
           padding: 10px 16px;
           color: #000000;
           box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.9);
-          flex-grow: 1;
+          margin-bottom: 8px;
         }
 
         .habbo-bubble::before {
           content: '';
           position: absolute;
-          right: -10px;
-          top: 50%;
-          transform: translateY(-50%);
-          border-width: 5px 0 5px 10px;
+          left: 20px;
+          bottom: -8px;
+          border-width: 8px 8px 0 0;
           border-style: solid;
-          border-color: transparent transparent transparent #18181b;
+          border-color: #18181b transparent;
         }
 
         .habbo-bubble-white {
@@ -398,12 +410,11 @@ export const Flood: React.FC = () => {
         .habbo-bubble-white::after {
           content: '';
           position: absolute;
-          right: -7px;
-          top: 50%;
-          transform: translateY(-50%);
-          border-width: 4px 0 4px 8px;
+          left: 21px;
+          bottom: -5px;
+          border-width: 6px 6px 0 0;
           border-style: solid;
-          border-color: transparent transparent transparent #ffffff;
+          border-color: #ffffff transparent;
         }
 
         .habbo-bubble-yellow {
@@ -413,24 +424,17 @@ export const Flood: React.FC = () => {
         .habbo-bubble-yellow::after {
           content: '';
           position: absolute;
-          right: -7px;
-          top: 50%;
-          transform: translateY(-50%);
-          border-width: 4px 0 4px 8px;
+          left: 21px;
+          bottom: -5px;
+          border-width: 6px 6px 0 0;
           border-style: solid;
-          border-color: transparent transparent transparent #fffbbf;
+          border-color: #fffbbf transparent;
         }
 
         .font-habbo {
           font-size: 0.88rem;
           font-weight: 600;
           font-family: monospace, system-ui;
-        }
-
-        /* Floating bubble container */
-        .btn-relative-container {
-          position: relative;
-          flex-shrink: 0;
         }
 
         /* Floating copied bubble animation */
@@ -494,11 +498,25 @@ export const Flood: React.FC = () => {
         }
 
         .copy-btn {
-          min-width: 100px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 6px;
+          padding: 6px 14px;
+          height: 32px;
+          border-radius: var(--radius-md);
+          font-size: 0.8rem;
+          font-weight: 600;
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid var(--border-zinc);
+          color: var(--text-primary);
+          transition: var(--transition-smooth);
+        }
+
+        .copy-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.2);
         }
 
         .copy-btn.copied {
@@ -507,18 +525,36 @@ export const Flood: React.FC = () => {
           background-color: var(--color-emerald-glow);
         }
 
+        .action-icon-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          padding: 0;
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid var(--border-zinc);
+          color: var(--text-muted);
+          transition: var(--transition-smooth);
+        }
+
+        .action-icon-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--text-primary);
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .action-icon-btn.delete-btn:hover {
+          color: var(--color-red);
+          background: rgba(239, 68, 68, 0.1);
+          border-color: rgba(239, 68, 68, 0.2);
+        }
+
         @media (max-width: 768px) {
-          .copy-bubble-row {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 12px;
-          }
           .habbo-bubble::before, .habbo-bubble::after {
             display: none;
-          }
-          .copy-btn {
-            width: 100%;
-          }
         }
       `}</style>
     </div>
