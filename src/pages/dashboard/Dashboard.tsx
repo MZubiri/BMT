@@ -57,7 +57,16 @@ export const Dashboard: React.FC = () => {
   const refreshMembers = () => {
     fetch('/api/members')
       .then(res => res.json())
-      .then(data => setMembers(data))
+      .then(data => {
+        const mapped = data.map((m: any) => ({
+          ...m,
+          weekMinutes: m.week_minutes !== undefined ? m.week_minutes : m.weekMinutes,
+          totalMinutes: m.total_minutes !== undefined ? m.total_minutes : m.totalMinutes,
+          joinedAt: m.joined_at !== undefined ? m.joined_at : m.joinedAt,
+          rankName: m.rank_name !== undefined ? m.rank_name : m.rankName
+        }));
+        setMembers(mapped);
+      })
       .catch(err => console.error(err));
   };
 
