@@ -79,6 +79,15 @@ export async function initDb(): Promise<void> {
         await connection.query(sqlQuery);
       }
       await connection.commit();
+      
+      // Dynamically add columns to members if they don't exist
+      try {
+        await connection.query('ALTER TABLE members ADD COLUMN password_hash VARCHAR(255) DEFAULT NULL');
+      } catch (e) {}
+      try {
+        await connection.query('ALTER TABLE members ADD COLUMN approved TINYINT(1) DEFAULT 0');
+      } catch (e) {}
+
       console.log('Database initialized successfully.');
     } catch (err) {
       await connection.rollback();

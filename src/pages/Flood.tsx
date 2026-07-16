@@ -1,53 +1,123 @@
-import React, { useState } from 'react';
-import { MessagesSquare, Copy, Check, ShieldAlert, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MessagesSquare, Copy, Check, ShieldAlert, Sparkles, Edit2, Trash2, Plus, X, Loader2 } from 'lucide-react';
 
 interface FloodItem {
-  id: string;
-  text: string;
+  id: number;
+  category: 'defense' | 'welcome';
+  content: string;
 }
 
-const DEFENSE_FLOODS: FloodItem[] = [
-  {
-    id: 'def-1',
-    text: '★ TÚ NOS VIENES A ATACAR, PUES ELEGISTE LA PEOR OPCIÓN. ★ ⚡ B.M.T ⚡ TE DOMINA. ⚡ B.M.T ⚡ RÍNDETE ANTE NOSOTROS. ★'
-  },
-  {
-    id: 'def-2',
-    text: '⊘ SØMØS ⚡ B.M.T ⚡ T3 GØB3RNAMOS. ⊘ SØMØS LA NUEVA ERA. ⚡ B.M.T ⚡ NØSØTROS NO OS TEMEMOS. ⊘'
-  }
-];
-
-const WELCOME_FLOODS: FloodItem[] = [
-  {
-    id: 'wel-1',
-    text: '♣ ¡Bienvenidos a BMT™! [★] Paga diaria de $7 por 1 hora y 30 minutos, más ascenso a Recluta. ¡Ven y te doy empleo! ♥'
-  },
-  {
-    id: 'wel-2',
-    text: '★ MI VIDA ERA GRIS, PERO GRACIAS A [BMT] PUDE COMPRAR COLORES. [BMT] PAGA SEMANAL. ¡ÚNETE! ♧♧♧♧'
-  }
-];
-
 export const Flood: React.FC = () => {
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [activeBubble, setActiveBubble] = useState<string | null>(null);
+  const [floods, setFloods] = useState<FloodItem[]>([]);
+  const [session, setSession] = useState<any>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [activeBubble, setActiveBubble] = useState<number | null>(null);
+  
+  // Editor state
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingFlood, setEditingFlood] = useState<FloodItem | null>(null);
+  const [formCategory, setFormCategory] = useState<'defense' | 'welcome'>('defense');
+  const [formContent, setFormContent] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleCopy = (text: string, id: string) => {
+  const getHeaders = () => {
+    const token = localStorage.getItem('bmt_token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  };
+
+  const fetchFloods = () => {
+    fetch('/api/floods')
+      .then(res => res.json())
+      .then(data => setFloods(data))
+      .catch(err => console.error('Error fetching floods:', err));
+  };
+
+  useEffect(() => {
+    const savedSession = localStorage.getItem('bmt_session');
+    if (savedSession) {
+      setSession(JSON.parse(savedSession));
+    }
+    fetchFloods();
+  }, []);
+
+  const handleCopy = (text: string, id: number) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopiedId(id);
       setActiveBubble(id);
       
-      // Reset copied state
       setTimeout(() => {
         setCopiedId(null);
       }, 2000);
 
-      // Hide the floating bubble after animation finishes
       setTimeout(() => {
         setActiveBubble(null);
       }, 1200);
     });
   };
+
+  const handleOpenAdd = (category: 'defense' | 'welcome') => {
+    setEditingFlood(null);
+    setFormCategory(category);
+    setFormContent('');
+    setIsEditorOpen(true);
+  };
+
+  const handleOpenEdit = (flood: FloodItem) => {
+    setEditingFlood(flood);
+    setFormCategory(flood.category);
+    setFormContent(flood.content);
+    setIsEditorOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (!window.confirm('¿Estás seguro de eliminar este flood?')) return;
+
+    fetch(`/api/floods/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al eliminar flood');
+        fetchFloods();
+      })
+      .catch(err => alert(err.message));
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formContent.trim()) return;
+
+    setIsSaving(true);
+    try {
+      const url = editingFlood ? `/api/floods/${editingFlood.id}` : '/api/floods';
+      const method = editingFlood ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: getHeaders(),
+        body: JSON.stringify({ category: formCategory, content: formContent.trim() })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar el flood');
+      }
+
+      setIsEditorOpen(false);
+      fetchFloods();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const showAdminControls = session?.role === 'OWNER' || session?.role === 'OFFICER';
+
+  const defenseFloods = floods.filter(f => f.category === 'defense');
+  const welcomeFloods = floods.filter(f => f.category === 'welcome');
 
   return (
     <div className="container">
@@ -64,16 +134,27 @@ export const Flood: React.FC = () => {
       <div className="flood-grid">
         {/* Defense Floods */}
         <section className="flood-section card">
-          <h2 className="section-subheading text-red">
-            <ShieldAlert size={20} />
-            Floods de Ataque / Defensa
-          </h2>
+          <div className="section-header-row">
+            <h2 className="section-subheading text-red">
+              <ShieldAlert size={20} />
+              Floods de Ataque / Defensa
+            </h2>
+            {showAdminControls && (
+              <button 
+                type="button" 
+                onClick={() => handleOpenAdd('defense')} 
+                className="btn btn-red btn-xs"
+              >
+                <Plus size={14} /> Añadir
+              </button>
+            )}
+          </div>
           <p className="section-desc">Usa estas frases cuando la sala esté bajo ataque para neutralizar al enemigo:</p>
           <div className="bubble-list">
-            {DEFENSE_FLOODS.map((item) => (
+            {defenseFloods.map((item) => (
               <div key={item.id} className="copy-bubble-row">
                 <div className="habbo-bubble habbo-bubble-white font-habbo">
-                  {item.text}
+                  {item.content}
                 </div>
                 <div className="btn-relative-container">
                   {activeBubble === item.id && (
@@ -81,21 +162,34 @@ export const Flood: React.FC = () => {
                       ¡Copiado! o/
                     </div>
                   )}
-                  <button
-                    onClick={() => handleCopy(item.text, item.id)}
-                    className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
-                    title="Copiar al portapapeles"
-                  >
-                    {copiedId === item.id ? (
+                  <div className="action-buttons-group">
+                    <button
+                      onClick={() => handleCopy(item.content, item.id)}
+                      className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
+                      title="Copiar al portapapeles"
+                    >
+                      {copiedId === item.id ? <Check size={14} className="text-emerald" /> : <Copy size={14} />}
+                      <span>{copiedId === item.id ? 'Copiado' : 'Copiar'}</span>
+                    </button>
+                    {showAdminControls && (
                       <>
-                        <Check size={14} className="text-emerald" /> Copiado
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={14} /> Copiar
+                        <button 
+                          onClick={() => handleOpenEdit(item)} 
+                          className="copy-btn edit-action-btn"
+                          title="Editar"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(item.id)} 
+                          className="copy-btn delete-action-btn"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </>
                     )}
-                  </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -104,16 +198,27 @@ export const Flood: React.FC = () => {
 
         {/* Welcome Floods */}
         <section className="flood-section card">
-          <h2 className="section-subheading text-emerald">
-            <Sparkles size={20} />
-            Floods de Bienvenida / Publicidad
-          </h2>
+          <div className="section-header-row">
+            <h2 className="section-subheading text-emerald">
+              <Sparkles size={20} />
+              Floods de Bienvenida / Publicidad
+            </h2>
+            {showAdminControls && (
+              <button 
+                type="button" 
+                onClick={() => handleOpenAdd('welcome')} 
+                className="btn btn-emerald btn-xs"
+              >
+                <Plus size={14} /> Añadir
+              </button>
+            )}
+          </div>
           <p className="section-desc">Usa estas frases para invitar a nuevos usuarios y reclutas a unirse a las filas:</p>
           <div className="bubble-list">
-            {WELCOME_FLOODS.map((item) => (
+            {welcomeFloods.map((item) => (
               <div key={item.id} className="copy-bubble-row">
                 <div className="habbo-bubble habbo-bubble-yellow font-habbo">
-                  {item.text}
+                  {item.content}
                 </div>
                 <div className="btn-relative-container">
                   {activeBubble === item.id && (
@@ -121,21 +226,34 @@ export const Flood: React.FC = () => {
                       ¡Copiado! o/
                     </div>
                   )}
-                  <button
-                    onClick={() => handleCopy(item.text, item.id)}
-                    className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
-                    title="Copiar al portapapeles"
-                  >
-                    {copiedId === item.id ? (
+                  <div className="action-buttons-group">
+                    <button
+                      onClick={() => handleCopy(item.content, item.id)}
+                      className={`copy-btn ${copiedId === item.id ? 'copied' : ''}`}
+                      title="Copiar al portapapeles"
+                    >
+                      {copiedId === item.id ? <Check size={14} className="text-emerald" /> : <Copy size={14} />}
+                      <span>{copiedId === item.id ? 'Copiado' : 'Copiar'}</span>
+                    </button>
+                    {showAdminControls && (
                       <>
-                        <Check size={14} className="text-emerald" /> Copiado
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={14} /> Copiar
+                        <button 
+                          onClick={() => handleOpenEdit(item)} 
+                          className="copy-btn edit-action-btn"
+                          title="Editar"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(item.id)} 
+                          className="copy-btn delete-action-btn"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </>
                     )}
-                  </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -143,14 +261,69 @@ export const Flood: React.FC = () => {
         </section>
       </div>
 
+      {/* Editor Modal */}
+      {isEditorOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-content card">
+            <div className="modal-header">
+              <h3 className="font-pixel">{editingFlood ? 'EDITAR FLOOD' : 'NUEVO FLOOD'}</h3>
+              <button onClick={() => setIsEditorOpen(false)} className="close-btn">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSave}>
+              <div className="form-group">
+                <label className="form-label">Categoría</label>
+                <select 
+                  className="form-input" 
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value as any)}
+                >
+                  <option value="defense">Ataque / Defensa</option>
+                  <option value="welcome">Bienvenida / Publicidad</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Contenido del Flood</label>
+                <textarea 
+                  className="form-input textarea-field" 
+                  rows={4}
+                  required
+                  placeholder="Escribe el flood aquí..."
+                  value={formContent}
+                  onChange={(e) => setFormContent(e.target.value)}
+                />
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  onClick={() => setIsEditorOpen(false)} 
+                  className="btn btn-secondary"
+                  disabled={isSaving}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={isSaving}
+                >
+                  {isSaving ? <Loader2 className="animate-spin" size={16} /> : 'Guardar Flood'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .flood-header {
           margin-bottom: 40px;
         }
 
         .flood-grid {
-          display: flex;
-          flex-direction: column;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
           gap: 32px;
         }
 
@@ -158,7 +331,14 @@ export const Flood: React.FC = () => {
           background-color: var(--bg-card);
           border: 1px solid var(--border-zinc);
           border-radius: var(--radius-lg);
-          padding: 32px;
+          padding: 24px;
+        }
+
+        .section-header-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
         }
 
         .section-subheading {

@@ -123,7 +123,7 @@ export const syncService = {
     } else {
       // Insert new member
       await query(
-        'INSERT INTO members (name, unique_id, role, figure, rank_name) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO members (name, unique_id, role, figure, rank_name, approved) VALUES (?, ?, ?, ?, ?, 1)',
         [name, uniqueId, matchedRole, figure, matchedRank]
       );
     }

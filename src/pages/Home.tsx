@@ -15,15 +15,15 @@ const JERARQUIA = [
 ];
 
 const GRUPOS_ESPECIALES = [
-  { name: 'Club <BMT>', badge: 'b07244s01134s36047s44244t52114ef2302532c051c38ee561e6bf57d9d42' },
+  { name: 'Club <BMT>', badge: 'b09014s02135s01013s03014t5501425f94961d34c6b3efd805544136c48d2' },
   { name: 'Guardia Real <BMT>', badge: 'b11134s02015s01133s03114t271147b3c519ba331db18e6ea510cde95c713' },
-  { name: 'Instr. Capacitación <BMT>', badge: 'b09014s02135s01013s03014t5501425f94961d34c6b3efd805544136c48d2' }
+  { name: 'Instr. Capacitación <BMT>', badge: 'b09114s02155s01133s44114t09154d1ff5cf25cde2dcd6f51f55f9fed1799' }
 ];
 
 const DEPARTAMENTOS = [
   { name: 'Dpto. Recursos Humanos', badge: 'b09134s02245s36047s11014s19114ee81c2ae461ce911bf3278cbc18cab9d' },
-  { name: 'Dpto. Entrenamiento', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642', isPending: true },
-  { name: 'Dpto. Ataque', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642', isPending: true },
+  { name: 'Dpto. Entrenamiento', badge: 'b27134s02065s01113s03114s30114c588803bd764d4dfb22100e15902ce66' },
+  { name: 'Dpto. Ataque', badge: 'b11134s02014s01114s03094t27014b9662d7c9dc8322cd83b4ae619c04057' },
   { name: 'Dpto. Capacitaciones', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642', isPending: true },
   { name: 'Dpto. Eventos', badge: 'b07014s02135s36047s44014s38114a7f2417aeed5e4160f9bc26de9ecf642', isPending: true }
 ];

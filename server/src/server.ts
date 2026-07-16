@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import { query, initDb } from './db/db';
 import { syncService } from './services/syncService';
 
@@ -19,6 +20,24 @@ app.use(express.json());
 initDb();
 
 // -------------------------------------------------------------
+// Security & Hashing Utilities
+// -------------------------------------------------------------
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, storedHash: string): boolean {
+  if (!storedHash) return false;
+  const parts = storedHash.split(':');
+  if (parts.length !== 2) return false;
+  const [salt, hash] = parts;
+  const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  return hash === verifyHash;
+}
+
+// -------------------------------------------------------------
 // JWT Middleware
 // -------------------------------------------------------------
 function authenticateToken(req: any, res: any, next: any) {
@@ -27,10 +46,26 @@ function authenticateToken(req: any, res: any, next: any) {
   
   if (!token) return res.status(401).json({ error: 'Falta el token de autorización' });
   
-  jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+  jwt.verify(token, JWT_SECRET, async (err: any, decoded: any) => {
     if (err) return res.status(403).json({ error: 'Token inválido o expirado' });
-    req.user = decoded;
-    next();
+    
+    try {
+      const users = await query<any[]>('SELECT approved, role FROM members WHERE id = ?', [decoded.id]);
+      if (users.length === 0) {
+        return res.status(403).json({ error: 'El usuario ya no existe' });
+      }
+      if (users[0].approved !== 1) {
+        return res.status(403).json({ error: 'Tu cuenta está pendiente de aprobación por un administrador' });
+      }
+      
+      req.user = {
+        ...decoded,
+        role: users[0].role
+      };
+      next();
+    } catch (dbErr) {
+      return res.status(500).json({ error: 'Error interno de autenticación' });
+    }
   });
 }
 
@@ -59,52 +94,125 @@ app.get('/api/habbo/users', async (req, res) => {
 // -------------------------------------------------------------
 // Auth API
 // -------------------------------------------------------------
-app.post('/api/auth/verify', async (req, res) => {
-  const { username, verificationCode } = req.body;
-  if (!username || !verificationCode) {
-    return res.status(400).json({ error: 'Falta el usuario o el código de verificación' });
+// -------------------------------------------------------------
+// Auth API
+// -------------------------------------------------------------
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Falta el usuario o la contraseña' });
+  }
+
+  const trimmedUsername = username.trim();
+  if (password.length < 4) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 4 caracteres' });
   }
 
   try {
-    // 1. Sync the user from Habbo (creates or updates them in MySQL)
-    const member = await syncService.syncUser(username);
-    
-    // 2. Fetch the latest motto from Habbo.es again to compare
-    const habboUrl = `https://www.habbo.es/api/public/users?name=${encodeURIComponent(username)}`;
+    // 1. Check if user exists on Habbo.es
+    const habboUrl = `https://www.habbo.es/api/public/users?name=${encodeURIComponent(trimmedUsername)}`;
     const habboResponse = await fetch(habboUrl);
+    if (habboResponse.status === 404) {
+      return res.status(404).json({ error: `El keko "${trimmedUsername}" no existe en Habbo.es` });
+    }
     if (!habboResponse.ok) {
-      return res.status(500).json({ error: 'No se pudo verificar la misión actual' });
+      return res.status(500).json({ error: 'No se pudo conectar con el servidor de Habbo.es' });
     }
     const habboData = await habboResponse.json();
-    const currentMotto = habboData.motto || '';
+    const uniqueId = habboData.uniqueId;
+    const figure = habboData.figureString;
+    const officialName = habboData.name; // Keep official casing
 
-    const matches = currentMotto.toLowerCase().includes(verificationCode.toLowerCase());
-    
-    if (matches) {
-      // Create JWT Token
-      const token = jwt.sign(
-        { id: member.id, name: member.name, role: member.role, figure: member.figure },
-        JWT_SECRET,
-        { expiresIn: '7d' }
-      );
+    // 2. Check if already exists in DB
+    const existing = await query<any[]>('SELECT id, password_hash, approved, role FROM members WHERE name = ?', [officialName]);
+    const passwordHash = hashPassword(password);
+
+    if (existing.length > 0) {
+      const member = existing[0];
+      if (member.password_hash) {
+        return res.status(400).json({ error: 'Este keko ya está registrado' });
+      }
+
+      // Claiming legacy seeded account
+      // Core members (Owners / Officers) are auto-approved on registration
+      const isCore = ['OWNER', 'OFFICER'].includes(member.role) || 
+                      ['migue-lito13.-', '-lyeremi-', 'alex-frezee', 'guss', 'ashleeeeyy', '...alma@.', 'qir'].includes(officialName.toLowerCase());
       
+      const nextApproved = isCore ? 1 : 0;
+      await query(
+        'UPDATE members SET password_hash = ?, approved = ?, figure = ? WHERE id = ?',
+        [passwordHash, nextApproved, figure, member.id]
+      );
+
       return res.json({
-        token,
-        session: {
-          name: member.name,
-          role: member.role,
-          figure: member.figure,
-          loginTime: new Date().toISOString()
-        }
-      });
-    } else {
-      return res.status(401).json({
-        error: `El código no coincide. Tu misión en Habbo es "${currentMotto}". Modifícala a "${verificationCode}" y vuelve a intentarlo.`
+        message: nextApproved === 1 
+          ? 'Registro completado con éxito. Ya puedes iniciar sesión.' 
+          : 'Registro completado. Tu cuenta está pendiente de aprobación por un administrador.'
       });
     }
+
+    // New member registration (starts as MEMBER and pending approval)
+    await query(
+      'INSERT INTO members (name, unique_id, role, figure, rank_name, password_hash, approved) VALUES (?, ?, "MEMBER", ?, "Grumete", ?, 0)',
+      [officialName, uniqueId, figure, passwordHash]
+    );
+
+    return res.json({
+      message: 'Registro completado. Tu cuenta está pendiente de aprobación por un administrador.'
+    });
   } catch (err: any) {
     console.error(err);
-    return res.status(500).json({ error: err.message || 'Error en la autenticación' });
+    return res.status(500).json({ error: err.message || 'Error en el proceso de registro' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Falta el usuario o la contraseña' });
+  }
+
+  try {
+    const members = await query<any[]>('SELECT * FROM members WHERE LOWER(name) = LOWER(?)', [username.trim()]);
+    if (members.length === 0) {
+      return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+    }
+
+    const member = members[0];
+    if (!member.password_hash) {
+      return res.status(401).json({ error: 'Esta cuenta aún no ha sido registrada con contraseña. Regístrala en la pestaña "Registrarse" primero.' });
+    }
+
+    const passwordMatches = verifyPassword(password, member.password_hash);
+    if (!passwordMatches) {
+      return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+    }
+
+    if (member.approved !== 1) {
+      return res.status(403).json({ error: 'Tu cuenta está pendiente de aprobación por un administrador' });
+    }
+
+    // Sync latest Habbo details in background
+    syncService.syncUser(member.name).catch(e => console.error('Background sync failed:', e));
+
+    const token = jwt.sign(
+      { id: member.id, name: member.name, role: member.role, figure: member.figure },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return res.json({
+      token,
+      session: {
+        name: member.name,
+        role: member.role,
+        figure: member.figure,
+        loginTime: new Date().toISOString()
+      }
+    });
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error en el proceso de autenticación' });
   }
 });
 
@@ -162,11 +270,110 @@ app.post('/api/auth/bypass', async (req, res) => {
 });
 
 // -------------------------------------------------------------
+// Admin Pending Approvals API
+// -------------------------------------------------------------
+app.get('/api/admin/pending', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
+  try {
+    const pending = await query('SELECT * FROM members WHERE approved = 0 ORDER BY name ASC');
+    return res.json(pending);
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al consultar solicitudes pendientes' });
+  }
+});
+
+app.post('/api/admin/approve/:id', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
+  const { id } = req.params;
+  try {
+    await query('UPDATE members SET approved = 1 WHERE id = ?', [id]);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al aprobar miembro' });
+  }
+});
+
+app.post('/api/admin/reject/:id', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
+  const { id } = req.params;
+  try {
+    await query('DELETE FROM members WHERE id = ? AND approved = 0', [id]);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al rechazar solicitud' });
+  }
+});
+
+// -------------------------------------------------------------
+// Floods API
+// -------------------------------------------------------------
+app.get('/api/floods', async (req, res) => {
+  try {
+    const floods = await query('SELECT * FROM floods ORDER BY id ASC');
+    return res.json(floods);
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al consultar floods' });
+  }
+});
+
+app.post('/api/floods', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
+  const { category, content } = req.body;
+  if (!category || !content) {
+    return res.status(400).json({ error: 'Falta la categoría o el contenido del flood' });
+  }
+  try {
+    await query('INSERT INTO floods (category, content) VALUES (?, ?)', [category, content]);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al crear flood' });
+  }
+});
+
+app.put('/api/floods/:id', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
+  const { id } = req.params;
+  const { category, content } = req.body;
+  if (!category || !content) {
+    return res.status(400).json({ error: 'Falta la categoría o el contenido del flood' });
+  }
+  try {
+    await query('UPDATE floods SET category = ?, content = ? WHERE id = ?', [category, content, id]);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al actualizar flood' });
+  }
+});
+
+app.delete('/api/floods/:id', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
+  const { id } = req.params;
+  try {
+    await query('DELETE FROM floods WHERE id = ?', [id]);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al eliminar flood' });
+  }
+});
+
+// -------------------------------------------------------------
 // Members API
 // -------------------------------------------------------------
 app.get('/api/members', async (req, res) => {
   try {
-    const members = await query('SELECT * FROM members ORDER BY name ASC');
+    const members = await query('SELECT * FROM members WHERE approved = 1 ORDER BY name ASC');
     return res.json(members);
   } catch (err: any) {
     return res.status(500).json({ error: 'Error al consultar miembros' });

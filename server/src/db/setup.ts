@@ -27,9 +27,12 @@ async function runSetup() {
       if (existing.length === 0) {
         console.log(`Pre-inserting core member placeholder: ${m.name}`);
         await query(
-          'INSERT INTO members (name, unique_id, role, figure, rank_name) VALUES (?, ?, ?, "hr-115-42", ?)',
+          'INSERT INTO members (name, unique_id, role, figure, rank_name, approved) VALUES (?, ?, ?, "hr-115-42", ?, 1)',
           [m.name, m.uniqueId, m.role, m.rank]
         );
+      } else {
+        // Ensure they are approved
+        await query('UPDATE members SET approved = 1 WHERE id = ?', [existing[0].id]);
       }
     }
 

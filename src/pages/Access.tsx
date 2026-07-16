@@ -1,83 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { KeyRound, Loader2, Copy, Check, ChevronLeft, ArrowRight } from 'lucide-react';
-import { habboService } from '../services/habboService';
-import type { HabboUser } from '../services/habboService';
+import { KeyRound, Loader2, UserPlus, LogIn } from 'lucide-react';
 
 export const Access: React.FC = () => {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
-  const [step, setStep] = useState<'username' | 'verify'>('username');
-  const [habboUser, setHabboUser] = useState<HabboUser | null>(null);
-  const [verificationCode, setVerificationCode] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Generate a code like BMT-XXXX
-  const generateCode = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = 'BMT-';
-    for (let i = 0; i < 5; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-  };
-
-  const handleUsernameSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim()) return;
+    if (!username.trim() || !password) return;
 
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
-    const trimmedName = username.trim();
-    if (trimmedName.toLowerCase() === 'guss') {
-      const mockGussUser: HabboUser = {
-        uniqueId: 'mock-guss-id',
-        name: 'Guss',
-        figureString: 'hr-115-42.hd-195-2.ch-3030-82.lg-275-1408.sh-300-64',
-        motto: 'Bypass de desarrollo',
-        online: false,
-        profileVisible: true
-      };
-      setHabboUser(mockGussUser);
-      setVerificationCode('DEV-GUSS');
-      setStep('verify');
-      setIsLoading(false);
-      return;
-    }
+    const trimmedUsername = username.trim();
 
-    try {
-      const user = await habboService.getUserByUsername(username);
-      setHabboUser(user);
-      setVerificationCode(generateCode());
-      setStep('verify');
-    } catch (err: any) {
-      setError(err.message || 'Error al conectar con Habbo.es');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    if (!habboUser) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    if (habboUser.name.toLowerCase() === 'guss') {
+    // Dev Bypass
+    if (mode === 'login' && trimmedUsername.toLowerCase() === 'guss' && password === 'guss') {
       const session = {
         name: 'Guss',
         role: 'OWNER' as const,
-        figure: habboUser.figureString,
+        figure: 'hr-115-42.hd-195-2.ch-3030-82.lg-275-1408.sh-300-64',
         loginTime: new Date().toISOString()
       };
 
       localStorage.setItem('bmt_token', 'mock-developer-jwt-token');
       localStorage.setItem('bmt_session', JSON.stringify(session));
-      
-      // Also ensure Guss is added to local members list for offline testing
+
       const savedMembersRaw = localStorage.getItem('bmt_members');
       let membersList = savedMembersRaw ? JSON.parse(savedMembersRaw) : [];
       const exists = membersList.some((m: any) => m.name.toLowerCase() === 'guss');
@@ -87,7 +42,7 @@ export const Access: React.FC = () => {
           id: 999,
           name: 'Guss',
           role: 'OWNER',
-          figure: habboUser.figureString,
+          figure: session.figure,
           joinedAt: new Date().toISOString(),
           weekMinutes: 0,
           totalMinutes: 0,
@@ -102,135 +57,133 @@ export const Access: React.FC = () => {
     }
 
     try {
-      const response = await fetch('/api/auth/verify', {
+      const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: habboUser.name, verificationCode })
+        body: JSON.stringify({ username: trimmedUsername, password })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || 'Error de autenticación');
+        throw new Error(data.error || 'Ocurrió un error en el servidor');
       }
 
-      const data = await response.json();
-      localStorage.setItem('bmt_token', data.token);
-      localStorage.setItem('bmt_session', JSON.stringify(data.session));
-      navigate('/dashboard');
+      if (mode === 'login') {
+        localStorage.setItem('bmt_token', data.token);
+        localStorage.setItem('bmt_session', JSON.stringify(data.session));
+        navigate('/dashboard');
+      } else {
+        setSuccessMessage(data.message || 'Registro completado. Tu cuenta está pendiente de aprobación por un administrador.');
+        setUsername('');
+        setPassword('');
+        setMode('login');
+      }
     } catch (err: any) {
-      setError(err.message || 'Error al validar el código');
+      setError(err.message || 'Error de conexión con el servidor');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(verificationCode).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
   return (
     <div className="container">
       <div className="access-card card">
-        {step === 'username' ? (
-          /* Step 1: Username Input */
-          <form onSubmit={handleUsernameSubmit}>
-            <div className="access-icon-header">
-              <KeyRound className="text-amber" size={40} />
-              <h2>Acceso Oficina</h2>
-            </div>
-            
-            <p className="access-instructions">
-              Inicia sesión en la oficina del BMT demostrando que el keko es tuyo: te damos un código, lo pones en la <strong>misión</strong> de tu keko en Habbo y lo comprobamos. Sin contraseñas.
-            </p>
+        <div className="access-icon-header">
+          <KeyRound className="text-amber" size={36} />
+          <h2>Oficina BMT</h2>
+        </div>
 
-            {error && <div className="alert alert-danger">{error}</div>}
+        {/* Tab Selection */}
+        <div className="auth-tabs">
+          <button 
+            type="button" 
+            className={`auth-tab-btn ${mode === 'login' ? 'active' : ''}`}
+            onClick={() => {
+              setMode('login');
+              setError(null);
+              setSuccessMessage(null);
+            }}
+            disabled={isLoading}
+          >
+            <LogIn size={16} />
+            <span>Iniciar Sesión</span>
+          </button>
+          <button 
+            type="button" 
+            className={`auth-tab-btn ${mode === 'register' ? 'active' : ''}`}
+            onClick={() => {
+              setMode('register');
+              setError(null);
+              setSuccessMessage(null);
+            }}
+            disabled={isLoading}
+          >
+            <UserPlus size={16} />
+            <span>Registrarse</span>
+          </button>
+        </div>
 
-            <div className="form-group">
-              <label htmlFor="username" className="form-label">
-                Nombre de tu keko en Habbo.es
-              </label>
-              <input
-                id="username"
-                type="text"
-                className="form-input"
-                placeholder="Ej.: Migue-lito13.-"
-                autoComplete="off"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
+        <p className="access-instructions">
+          {mode === 'login' 
+            ? 'Ingresa tus credenciales registradas para acceder a tu hoja de servicio y al panel de control militar.'
+            : 'Crea tu cuenta de oficina vinculada a tu keko. Una vez registrado, un administrador o dueño deberá aprobar tu ingreso.'
+          }
+        </p>
 
-            <button type="submit" className="btn btn-primary w-full" disabled={isLoading || !username.trim()}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin" size={18} /> Buscando keko...
-                </>
-              ) : (
-                <>
-                  Continuar <ArrowRight size={18} />
-                </>
-              )}
-            </button>
-          </form>
-        ) : (
-          /* Step 2: Verification Code */
-          <div className="verify-flow">
-            <button type="button" onClick={() => setStep('username')} className="back-btn" disabled={isLoading}>
-              <ChevronLeft size={16} /> Cambiar keko
-            </button>
+        {error && <div className="alert alert-danger">{error}</div>}
+        {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
-            <div className="verify-user-header">
-              <div className="avatar-circle">
-                <img
-                  src={habboService.getAvatarUrl(habboUser!.name, { size: 'm' })}
-                  alt={habboUser!.name}
-                  className="access-avatar-img"
-                />
-              </div>
-              <h3 className="verify-user-name">{habboUser!.name}</h3>
-            </div>
-
-            <p className="verify-instructions">
-              Pon este código en tu **misión** de Habbo y haz clic en verificar.
-            </p>
-
-            {error && <div className="alert alert-danger">{error}</div>}
-
-            <div className="code-box">
-              <span className="code-text font-pixel">{verificationCode}</span>
-              <button type="button" onClick={handleCopyCode} className="code-copy-btn">
-                {copied ? <Check size={16} className="text-emerald" /> : <Copy size={16} />}
-              </button>
-            </div>
-
-            <div className="verify-actions">
-              <button
-                type="button"
-                onClick={handleVerifyCode}
-                className="btn btn-primary w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin" size={18} /> Comprobando...
-                  </>
-                ) : (
-                  'Verificar y Entrar'
-                )}
-              </button>
-            </div>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="username" className="form-label">
+              Nombre de tu keko en Habbo.es
+            </label>
+            <input
+              id="username"
+              type="text"
+              className="form-input"
+              placeholder="Ej.: Migue-lito13.-"
+              autoComplete="off"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={isLoading}
+            />
           </div>
-        )}
+
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">
+              Contraseña
+            </label>
+            <input
+              id="password"
+              type="password"
+              className="form-input"
+              placeholder="Escribe tu contraseña"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin" size={18} /> Procesando...
+              </>
+            ) : (
+              mode === 'login' ? 'Entrar a la Oficina' : 'Completar Registro'
+            )}
+          </button>
+        </form>
       </div>
 
       <style>{`
         .access-card {
-          max-width: 480px;
+          max-width: 460px;
           margin: 40px auto;
           padding: 40px;
           border-top: 4px solid var(--color-amber);
@@ -239,114 +192,66 @@ export const Access: React.FC = () => {
         .access-icon-header {
           display: flex;
           align-items: center;
-          gap: 16px;
-          margin-bottom: 16px;
+          justify-content: center;
+          gap: 12px;
+          margin-bottom: 24px;
         }
 
         .access-icon-header h2 {
-          font-size: 1.75rem;
+          font-size: 1.6rem;
           font-weight: 800;
+        }
+
+        .auth-tabs {
+          display: flex;
+          background-color: rgba(24, 24, 27, 0.4);
+          border: 1px solid var(--border-zinc);
+          border-radius: var(--radius-md);
+          padding: 4px;
+          margin-bottom: 24px;
+        }
+
+        .auth-tab-btn {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 10px;
+          background: none;
+          border: none;
+          color: var(--text-secondary);
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+          border-radius: var(--radius-sm);
+          transition: var(--transition-smooth);
+        }
+
+        .auth-tab-btn:hover:not(:disabled) {
+          color: var(--text-primary);
+          background-color: rgba(39, 39, 42, 0.4);
+        }
+
+        .auth-tab-btn.active {
+          background-color: var(--color-amber);
+          color: #000;
         }
 
         .access-instructions {
           color: var(--text-secondary);
-          font-size: 0.95rem;
-          line-height: 1.6;
-          margin-bottom: 32px;
+          font-size: 0.9rem;
+          line-height: 1.5;
+          text-align: center;
+          margin-bottom: 28px;
         }
 
         .w-full {
           width: 100%;
         }
 
-        .back-btn {
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          font-size: 0.85rem;
-          font-weight: 600;
-          cursor: pointer;
-          margin-bottom: 24px;
-          padding: 0;
-          transition: var(--transition-smooth);
-        }
-
-        .back-btn:hover {
-          color: var(--text-primary);
-        }
-
-        .verify-user-header {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
+        .form-group {
           margin-bottom: 20px;
-        }
-
-        .avatar-circle {
-          width: 72px;
-          height: 72px;
-          border-radius: 9999px;
-          background-color: var(--bg-card-hover);
-          border: 1px solid var(--border-zinc);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-
-        .access-avatar-img {
-          height: 100px;
-          margin-top: -15px;
-          image-rendering: pixelated;
-        }
-
-        .verify-user-name {
-          font-size: 1.25rem;
-          font-weight: 800;
-          color: var(--text-primary);
-        }
-
-        .verify-instructions {
-          color: var(--text-secondary);
-          font-size: 0.9rem;
-          text-align: center;
-          margin-bottom: 20px;
-        }
-
-        .code-box {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background-color: var(--bg-input);
-          border: 1px solid var(--border-zinc);
-          border-radius: var(--radius-md);
-          padding: 12px 20px;
-          margin-bottom: 24px;
-        }
-
-        .code-text {
-          font-size: 1.1rem;
-          color: var(--color-amber);
-          letter-spacing: 0.05em;
-        }
-
-        .code-copy-btn {
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          cursor: pointer;
-          padding: 6px;
-          border-radius: var(--radius-sm);
-          transition: var(--transition-smooth);
-        }
-
-        .code-copy-btn:hover {
-          background-color: var(--bg-card-hover);
-          color: var(--text-primary);
         }
 
         .animate-spin {
@@ -354,17 +259,13 @@ export const Access: React.FC = () => {
         }
 
         @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         @media (max-width: 480px) {
           .access-card {
-            padding: 24px;
+            padding: 24px 16px;
           }
         }
       `}</style>

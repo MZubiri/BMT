@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Trash2, Search, Loader2, Check, RefreshCw } from 'lucide-react';
+import { Users, UserPlus, Trash2, Search, Loader2, Check, RefreshCw, Clock, ShieldCheck, UserMinus } from 'lucide-react';
 import { habboService } from '../../services/habboService';
 
 interface Member {
@@ -11,6 +11,7 @@ interface Member {
   weekMinutes: number;
   totalMinutes: number;
   rankName?: string;
+  approved?: number;
 }
 
 const MILITARY_RANKS = [
@@ -29,7 +30,9 @@ const MILITARY_RANKS = [
 ];
 
 export const DashboardUsers: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'members' | 'pending' | 'add'>('members');
   const [members, setMembers] = useState<Member[]>([]);
+  const [pending, setPending] = useState<Member[]>([]);
   const [search, setSearch] = useState('');
   
   // Form state
@@ -55,9 +58,24 @@ export const DashboardUsers: React.FC = () => {
       .catch(err => console.error(err));
   };
 
+  const fetchPending = () => {
+    fetch('/api/admin/pending', { headers: getHeaders() })
+      .then(res => res.json())
+      .then(data => setPending(data))
+      .catch(err => console.error(err));
+  };
+
   useEffect(() => {
     refreshMembers();
+    fetchPending();
   }, []);
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,10 +87,10 @@ export const DashboardUsers: React.FC = () => {
     const targetName = newMemberName.trim();
     const lowercaseName = targetName.toLowerCase();
 
-    // Check if already exists
+    // Check if already exists in active members
     const exists = members.some(m => m.name.toLowerCase() === lowercaseName);
     if (exists) {
-      setMessage({ text: `El keko "${targetName}" ya está registrado como miembro.`, type: 'error' });
+      setMessage({ text: `El keko "${targetName}" ya está registrado como miembro activo.`, type: 'error' });
       setIsLoading(false);
       return;
     }
@@ -99,6 +117,7 @@ export const DashboardUsers: React.FC = () => {
       setNewMemberRole('MEMBER');
       setNewMemberRank('Grumete');
       refreshMembers();
+      setActiveTab('members');
     } catch (err: any) {
       setMessage({ text: err.message || 'Error al validar el keko en Habbo.es', type: 'error' });
     } finally {
@@ -146,6 +165,35 @@ export const DashboardUsers: React.FC = () => {
       .catch(err => alert(err.message));
   };
 
+  const handleApprove = (id: number, name: string) => {
+    fetch(`/api/admin/approve/${id}`, {
+      method: 'POST',
+      headers: getHeaders()
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al aprobar miembro');
+        setMessage({ text: `Solicitud de "${name}" aprobada con éxito.`, type: 'success' });
+        fetchPending();
+        refreshMembers();
+      })
+      .catch(err => alert(err.message));
+  };
+
+  const handleReject = (id: number, name: string) => {
+    if (!window.confirm(`¿Estás seguro de rechazar la solicitud de "${name}"? Se eliminará de la base de datos.`)) return;
+
+    fetch(`/api/admin/reject/${id}`, {
+      method: 'POST',
+      headers: getHeaders()
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al rechazar solicitud');
+        setMessage({ text: `Solicitud de "${name}" rechazada y eliminada.`, type: 'success' });
+        fetchPending();
+      })
+      .catch(err => alert(err.message));
+  };
+
   const handleSyncAll = () => {
     setIsLoading(true);
     fetch('/api/members/sync-all', {
@@ -177,217 +225,344 @@ export const DashboardUsers: React.FC = () => {
       <div>
         <div className="section-title">
           <Users className="text-amber" size={24} />
-          <h1>Miembros del Batallón</h1>
+          <h1>Administración de Personal</h1>
         </div>
         <p className="section-subtitle">
-          Administra el personal del BMT, agrega nuevos reclutas y gestiona los rangos y permisos de acceso.
+          Gestiona los miembros activos, aprueba nuevas solicitudes de registro y asigna rangos o cargos.
         </p>
       </div>
 
-      <div className="grid-2">
-        {/* Add Member Form */}
-        <section className="card">
-          <h2 className="section-subheading">
-            <UserPlus size={20} className="text-amber" />
-            Agregar Nuevo Miembro
-          </h2>
-          <p className="form-description">
-            Introduce el nombre exacto de Habbo.es. Validaremos que el personaje exista antes de agregarlo.
-          </p>
-
-          {message && (
-            <div className={`alert ${message.type === 'success' ? 'alert-info' : 'alert-danger'}`}>
-              {message.type === 'success' && <Check size={16} className="text-emerald" />}
-              <span>{message.text}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleAddMember} className="add-member-form">
-            <div className="form-group">
-              <label htmlFor="memberName" className="form-label">Nombre del keko en Habbo.es</label>
-              <input
-                id="memberName"
-                type="text"
-                placeholder="Ej.: Migue-lito13.-"
-                value={newMemberName}
-                onChange={(e) => setNewMemberName(e.target.value)}
-                className="form-input"
-                autoComplete="off"
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="form-group-row">
-              <div className="form-group flex-1">
-                <label htmlFor="memberRole" className="form-label">Cargo Administrativo</label>
-                <select
-                  id="memberRole"
-                  value={newMemberRole}
-                  onChange={(e) => setNewMemberRole(e.target.value as any)}
-                  className="form-input"
-                  disabled={isLoading}
-                >
-                  <option value="MEMBER">Militar (Estándar)</option>
-                  <option value="OFFICER">Oficial (Admin)</option>
-                  <option value="OWNER">Dueño (Todo)</option>
-                </select>
-              </div>
-
-              <div className="form-group flex-1">
-                <label htmlFor="memberRank" className="form-label">Rango Militar</label>
-                <select
-                  id="memberRank"
-                  value={newMemberRank}
-                  onChange={(e) => setNewMemberRank(e.target.value)}
-                  className="form-input"
-                  disabled={isLoading}
-                >
-                  {MILITARY_RANKS.map(r => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <button type="submit" className="btn btn-primary w-full" disabled={isLoading || !newMemberName.trim()}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin" size={16} /> Verificando en Habbo...
-                </>
-              ) : (
-                'Registrar Miembro'
-              )}
-            </button>
-          </form>
-        </section>
-
-        {/* Info panel */}
-        <section className="card admin-info-card">
-          <h2 className="section-subheading">Estructura de Cargos</h2>
-          <div className="role-explainer-list">
-            <div className="role-explainer-item">
-              <span className="badge-pill badge-owner">Dueño</span>
-              <p>Tiene control absoluto sobre la oficina. Puede gestionar miembros, modificar todos los rangos, registrar tiempos y reiniciar la caja de pagas semanal.</p>
-            </div>
-            <div className="role-explainer-item">
-              <span className="badge-pill badge-officer">Oficial</span>
-              <p>Ayuda en la administración. Puede agregar miembros, registrar el tiempo de servicio de otros militares y ver el reporte de pagas acumuladas.</p>
-            </div>
-            <div className="role-explainer-item">
-              <span className="badge-pill badge-member">Militar</span>
-              <p>Miembro del batallón. Solo tiene acceso a su panel personal "Mi Tiempo" para iniciar y terminar sus propios turnos de guardia.</p>
-            </div>
-          </div>
-        </section>
+      {/* Tabs Menu */}
+      <div className="admin-tabs">
+        <button 
+          className={`admin-tab-link ${activeTab === 'members' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('members'); setMessage(null); }}
+        >
+          <Users size={16} />
+          <span>Miembros Activos ({members.length})</span>
+        </button>
+        <button 
+          className={`admin-tab-link ${activeTab === 'pending' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('pending'); setMessage(null); fetchPending(); }}
+        >
+          <Clock size={16} />
+          <span>Solicitudes Pendientes ({pending.length})</span>
+        </button>
+        <button 
+          className={`admin-tab-link ${activeTab === 'add' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('add'); setMessage(null); }}
+        >
+          <UserPlus size={16} />
+          <span>Registrar Manual</span>
+        </button>
       </div>
 
-      {/* Members Directory */}
-      <section>
-        <div className="directory-header-row">
-          <h2 className="section-title">Directorio de Personal</h2>
-          <div className="directory-actions">
-            <button onClick={handleSyncAll} className="btn btn-secondary sync-btn" disabled={isLoading}>
-              <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} /> Sincronizar de Habbo
-            </button>
-            <div className="search-bar">
-              <Search size={16} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Buscar por keko..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="form-input search-input"
-              />
+      {message && (
+        <div className={`alert ${message.type === 'success' ? 'alert-info' : 'alert-danger'}`}>
+          {message.type === 'success' && <Check size={16} className="text-emerald" />}
+          <span>{message.text}</span>
+        </div>
+      )}
+
+      {/* Active Members View */}
+      {activeTab === 'members' && (
+        <section className="fade-in">
+          <div className="directory-header-row">
+            <h2 className="section-title">Miembros del Batallón</h2>
+            <div className="directory-actions">
+              <button onClick={handleSyncAll} className="btn btn-secondary sync-btn" disabled={isLoading}>
+                <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} /> Sincronizar de Habbo
+              </button>
+              <div className="search-bar">
+                <Search size={16} className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Buscar por keko..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="form-input search-input"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="table-container">
-          {filteredMembers.length === 0 ? (
-            <div className="empty-state">No se encontraron miembros con el criterio de búsqueda.</div>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Miembro</th>
-                  <th>Cargo</th>
-                  <th>Rango Militar</th>
-                  <th>Ingreso</th>
-                  <th>Semana</th>
-                  <th>Total Acumulado</th>
-                  <th style={{ width: '80px', textAlign: 'right' }}>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMembers.map((member) => (
-                  <tr key={member.id}>
-                    <td className="keko-cell">
-                      <div className="table-avatar-wrapper">
-                        <img
-                          src={habboService.getAvatarUrl(member.name, { size: 'm' })}
-                          alt={member.name}
-                          className="table-avatar-img"
-                        />
-                      </div>
-                      <span className="duty-keko-name">{member.name}</span>
-                    </td>
-                    <td>
-                      <select
-                        value={member.role}
-                        onChange={(e) => handleChangeRole(member.id, e.target.value as any)}
-                        className="role-selector"
-                      >
-                        <option value="MEMBER">Militar</option>
-                        <option value="OFFICER">Oficial</option>
-                        <option value="OWNER">Dueño</option>
-                      </select>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <img 
-                          src={habboService.getBadgeUrl(habboService.getBadgeForRank(member.rankName || 'Grumete'))} 
-                          alt="Placa" 
-                          className="rank-badge-inline"
-                        />
+          <div className="table-container">
+            {filteredMembers.length === 0 ? (
+              <div className="empty-state">No se encontraron miembros activos.</div>
+            ) : (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Miembro</th>
+                    <th>Cargo</th>
+                    <th>Rango Militar</th>
+                    <th>Ingreso</th>
+                    <th>Semana</th>
+                    <th>Total Acumulado</th>
+                    <th style={{ width: '80px', textAlign: 'right' }}>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMembers.map((member) => (
+                    <tr key={member.id}>
+                      <td className="keko-cell">
+                        <div className="table-avatar-wrapper">
+                          <img
+                            src={habboService.getAvatarUrl(member.name, { size: 'm' })}
+                            alt={member.name}
+                            className="table-avatar-img"
+                          />
+                        </div>
+                        <span className="duty-keko-name">{member.name}</span>
+                      </td>
+                      <td>
                         <select
-                          value={member.rankName || 'Grumete'}
-                          onChange={(e) => handleChangeRank(member.id, e.target.value)}
+                          value={member.role}
+                          onChange={(e) => handleChangeRole(member.id, e.target.value as any)}
                           className="role-selector"
                         >
-                          {MILITARY_RANKS.map(r => (
-                            <option key={r} value={r}>{r}</option>
-                          ))}
+                          <option value="MEMBER">Militar</option>
+                          <option value="OFFICER">Oficial</option>
+                          <option value="OWNER">Dueño</option>
                         </select>
-                      </div>
-                    </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      {new Date(member.joinedAt).toLocaleDateString()}
-                    </td>
-                    <td className="text-emerald font-semibold">
-                      {formatMinutes(member.weekMinutes)}
-                    </td>
-                    <td>
-                      {formatMinutes(member.totalMinutes)}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleDeleteMember(member.id, member.name)}
-                        className="btn-icon-danger"
-                        title="Eliminar miembro"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <img 
+                            src={habboService.getBadgeUrl(habboService.getBadgeForRank(member.rankName || 'Grumete'))} 
+                            alt="Placa" 
+                            className="rank-badge-inline"
+                          />
+                          <select
+                            value={member.rankName || 'Grumete'}
+                            onChange={(e) => handleChangeRank(member.id, e.target.value)}
+                            className="role-selector"
+                          >
+                            {MILITARY_RANKS.map(r => (
+                              <option key={r} value={r}>{r}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        {new Date(member.joinedAt).toLocaleDateString()}
+                      </td>
+                      <td className="text-emerald font-semibold">
+                        {formatMinutes(member.weekMinutes)}
+                      </td>
+                      <td>
+                        {formatMinutes(member.totalMinutes)}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleDeleteMember(member.id, member.name)}
+                          className="btn-icon-danger"
+                          title="Eliminar miembro"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Pending Requests View */}
+      {activeTab === 'pending' && (
+        <section className="fade-in card">
+          <h2 className="section-subheading">
+            <Clock size={20} className="text-amber" />
+            Solicitudes de Registro Pendientes
+          </h2>
+          <p className="form-description">
+            Estos usuarios se registraron en la web y esperan aprobación para poder iniciar sesión y registrar horas de servicio.
+          </p>
+
+          <div className="table-container">
+            {pending.length === 0 ? (
+              <div className="empty-state">No hay solicitudes de registro pendientes en este momento.</div>
+            ) : (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Keko</th>
+                    <th>Fecha de Registro</th>
+                    <th style={{ width: '200px', textAlign: 'right' }}>Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {pending.map((reqUser) => (
+                    <tr key={reqUser.id}>
+                      <td className="keko-cell">
+                        <div className="table-avatar-wrapper">
+                          <img
+                            src={habboService.getAvatarUrl(reqUser.name, { size: 'm' })}
+                            alt={reqUser.name}
+                            className="table-avatar-img"
+                          />
+                        </div>
+                        <span className="duty-keko-name">{reqUser.name}</span>
+                      </td>
+                      <td style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                        {new Date(reqUser.joinedAt).toLocaleString()}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(reqUser.id, reqUser.name)}
+                            className="btn btn-emerald btn-xs"
+                          >
+                            <ShieldCheck size={14} /> Aprobar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleReject(reqUser.id, reqUser.name)}
+                            className="btn btn-red btn-xs"
+                          >
+                            <UserMinus size={14} /> Rechazar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Register Manual View */}
+      {activeTab === 'add' && (
+        <div className="grid-2 fade-in">
+          <section className="card">
+            <h2 className="section-subheading">
+              <UserPlus size={20} className="text-amber" />
+              Agregar Miembro Directamente
+            </h2>
+            <p className="form-description">
+              Registra un militar manualmente. Se creará la cuenta con estado **Aprobado** de forma inmediata.
+            </p>
+
+            <form onSubmit={handleAddMember} className="add-member-form">
+              <div className="form-group">
+                <label htmlFor="memberName" className="form-label">Nombre del keko en Habbo.es</label>
+                <input
+                  id="memberName"
+                  type="text"
+                  placeholder="Ej.: Migue-lito13.-"
+                  value={newMemberName}
+                  onChange={(e) => setNewMemberName(e.target.value)}
+                  className="form-input"
+                  autoComplete="off"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="form-group-row">
+                <div className="form-group flex-1">
+                  <label htmlFor="memberRole" className="form-label">Cargo Administrativo</label>
+                  <select
+                    id="memberRole"
+                    value={newMemberRole}
+                    onChange={(e) => setNewMemberRole(e.target.value as any)}
+                    className="form-input"
+                    disabled={isLoading}
+                  >
+                    <option value="MEMBER">Militar (Estándar)</option>
+                    <option value="OFFICER">Oficial (Admin)</option>
+                    <option value="OWNER">Dueño (Todo)</option>
+                  </select>
+                </div>
+
+                <div className="form-group flex-1">
+                  <label htmlFor="memberRank" className="form-label">Rango Militar</label>
+                  <select
+                    id="memberRank"
+                    value={newMemberRank}
+                    onChange={(e) => setNewMemberRank(e.target.value)}
+                    className="form-input"
+                    disabled={isLoading}
+                  >
+                    {MILITARY_RANKS.map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn-primary w-full" disabled={isLoading || !newMemberName.trim()}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} /> Verificando en Habbo...
+                  </>
+                ) : (
+                  'Registrar Miembro'
+                )}
+              </button>
+            </form>
+          </section>
+
+          {/* Info panel */}
+          <section className="card admin-info-card">
+            <h2 className="section-subheading">Estructura de Cargos</h2>
+            <div className="role-explainer-list">
+              <div className="role-explainer-item">
+                <span className="badge-pill badge-owner">Dueño</span>
+                <p>Tiene control absoluto sobre la oficina. Puede gestionar miembros, modificar todos los rangos, registrar tiempos y reiniciar la caja de pagas semanal.</p>
+              </div>
+              <div className="role-explainer-item">
+                <span className="badge-pill badge-officer">Oficial</span>
+                <p>Ayuda en la administración. Puede agregar miembros, registrar el tiempo de servicio de otros militares y ver el reporte de pagas acumuladas.</p>
+              </div>
+              <div className="role-explainer-item">
+                <span className="badge-pill badge-member">Militar</span>
+                <p>Miembro del batallón. Solo tiene acceso a su panel personal "Mi Tiempo" para iniciar y terminar sus propios turnos de guardia.</p>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
+      )}
 
       <style>{`
+        .admin-tabs {
+          display: flex;
+          border-bottom: 2px solid var(--border-zinc);
+          gap: 16px;
+          margin-bottom: 10px;
+        }
+
+        .admin-tab-link {
+          background: none;
+          border: none;
+          border-bottom: 2px solid transparent;
+          color: var(--text-secondary);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 6px;
+          font-weight: 600;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: var(--transition-smooth);
+          margin-bottom: -2px;
+        }
+
+        .admin-tab-link:hover {
+          color: var(--text-primary);
+        }
+
+        .admin-tab-link.active {
+          color: var(--color-amber);
+          border-color: var(--color-amber);
+        }
+
         .form-description {
           color: var(--text-secondary);
           font-size: 0.85rem;
@@ -534,6 +709,42 @@ export const DashboardUsers: React.FC = () => {
           to {
             transform: rotate(360deg);
           }
+        }
+
+        .fade-in {
+          animation: fadeIn 0.3s ease-in-out forwards;
+        }
+
+        .btn-xs {
+          padding: 6px 12px;
+          font-size: 0.8rem;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          border-radius: var(--radius-sm);
+        }
+
+        .btn-red {
+          background-color: var(--color-red);
+          color: #fff;
+        }
+
+        .btn-red:hover {
+          background-color: #ef4444;
+        }
+
+        .btn-emerald {
+          background-color: var(--color-emerald);
+          color: #fff;
+        }
+
+        .btn-emerald:hover {
+          background-color: #10b981;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
