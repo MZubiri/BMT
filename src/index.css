@@ -632,8 +632,10 @@ a {
 @media (max-width: 768px) {
   .dashboard-sidebar {
     flex-direction: row;
-    overflow-x: auto;
-    padding: 12px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    gap: 12px;
     border-right: none;
     border-bottom: 1px solid var(--border-zinc);
   }

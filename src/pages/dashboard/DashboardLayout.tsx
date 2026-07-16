@@ -182,16 +182,30 @@ export const DashboardLayout: React.FC = () => {
 
         @media (max-width: 768px) {
           .sidebar-user-card {
-            margin-bottom: 0;
-            padding: 8px 12px;
+            display: none !important;
           }
           .sidebar-logout-btn {
             margin-top: 0;
-            width: auto;
+            width: 36px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+          }
+          .sidebar-logout-btn span {
+            display: none;
           }
           .sidebar-nav {
             flex-direction: row;
-            flex: unset;
+            flex: 1;
+            gap: 4px;
+            overflow-x: auto;
+            scrollbar-width: none;
+          }
+          .sidebar-nav::-webkit-scrollbar {
+            display: none;
           }
         }
       `}</style>

@@ -323,36 +323,127 @@ export const DashboardUsers: React.FC = () => {
             </div>
           </div>
 
-          <div className="table-container">
-            {filteredMembers.length === 0 ? (
+          {filteredMembers.length === 0 ? (
+            <div className="table-container">
               <div className="empty-state">No se encontraron miembros activos.</div>
-            ) : (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Miembro</th>
-                    <th>Cargo</th>
-                    <th>Rango Militar</th>
-                    <th>Ingreso</th>
-                    <th>Semana</th>
-                    <th>Total Acumulado</th>
-                    <th style={{ width: '80px', textAlign: 'right' }}>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMembers.map((member) => (
-                    <tr key={member.id}>
-                      <td className="keko-cell">
-                        <div className="table-avatar-wrapper">
-                          <img
-                            src={habboService.getAvatarUrl(member.name, { size: 'm' })}
-                            alt={member.name}
-                            className="table-avatar-img"
-                          />
+            </div>
+          ) : (
+            <>
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Miembro</th>
+                      <th>Cargo</th>
+                      <th>Rango Militar</th>
+                      <th>Ingreso</th>
+                      <th>Semana</th>
+                      <th>Total Acumulado</th>
+                      <th style={{ width: '80px', textAlign: 'right' }}>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredMembers.map((member) => (
+                      <tr key={member.id}>
+                        <td className="keko-cell">
+                          <div className="table-avatar-wrapper">
+                            <img
+                              src={habboService.getAvatarUrl(member.name, { size: 'm' })}
+                              alt={member.name}
+                              className="table-avatar-img"
+                            />
+                          </div>
+                          <span className="duty-keko-name">{member.name}</span>
+                        </td>
+                        <td>
+                          <select
+                            value={getCargoForRank(member.rankName || 'Grumete')}
+                            onChange={(e) => {
+                              const newCargo = e.target.value;
+                              const defaultRank = CARGO_RANKS[newCargo][0];
+                              handleChangeRank(member.id, defaultRank);
+                            }}
+                            className="role-selector"
+                          >
+                            {Object.keys(CARGO_RANKS).map(cargo => (
+                              <option key={cargo} value={cargo}>{cargo}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <img 
+                              src={habboService.getBadgeUrl(habboService.getBadgeForRank(member.rankName || 'Grumete'))} 
+                              alt="Placa" 
+                              className="rank-badge-inline"
+                            />
+                            <select
+                              value={member.rankName || 'Grumete'}
+                              onChange={(e) => handleChangeRank(member.id, e.target.value)}
+                              className="role-selector"
+                            >
+                              {(CARGO_RANKS[getCargoForRank(member.rankName || 'Grumete')] || []).map(r => (
+                                <option key={r} value={r}>{r}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </td>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          {new Date(member.joinedAt).toLocaleDateString()}
+                        </td>
+                        <td className="text-emerald font-semibold">
+                          {formatMinutes(member.weekMinutes)}
+                        </td>
+                        <td>
+                          {formatMinutes(member.totalMinutes)}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={() => handleResetPassword(member.id, member.name)}
+                              className="btn-icon-warning"
+                              title="Restablecer contraseña"
+                            >
+                              <KeyRound size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMember(member.id, member.name)}
+                              className="btn-icon-danger"
+                              title="Eliminar miembro"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards list */}
+              <div className="mobile-cards-list">
+                {filteredMembers.map((member) => (
+                  <div key={member.id} className="member-mobile-card card">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="table-avatar-wrapper">
+                        <img
+                          src={habboService.getAvatarUrl(member.name, { size: 'm' })}
+                          alt={member.name}
+                          className="table-avatar-img"
+                        />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{member.name}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          Ingreso: {new Date(member.joinedAt).toLocaleDateString()}
                         </div>
-                        <span className="duty-keko-name">{member.name}</span>
-                      </td>
-                      <td>
+                      </div>
+                    </div>
+
+                    <div className="form-group-row" style={{ marginTop: '4px' }}>
+                      <div className="form-group flex-1">
+                        <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Cargo</label>
                         <select
                           value={getCargoForRank(member.rankName || 'Grumete')}
                           onChange={(e) => {
@@ -361,63 +452,60 @@ export const DashboardUsers: React.FC = () => {
                             handleChangeRank(member.id, defaultRank);
                           }}
                           className="role-selector"
+                          style={{ maxWidth: '100%', width: '100%' }}
                         >
                           {Object.keys(CARGO_RANKS).map(cargo => (
                             <option key={cargo} value={cargo}>{cargo}</option>
                           ))}
                         </select>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <img 
-                            src={habboService.getBadgeUrl(habboService.getBadgeForRank(member.rankName || 'Grumete'))} 
-                            alt="Placa" 
-                            className="rank-badge-inline"
-                          />
-                          <select
-                            value={member.rankName || 'Grumete'}
-                            onChange={(e) => handleChangeRank(member.id, e.target.value)}
-                            className="role-selector"
-                          >
-                            {(CARGO_RANKS[getCargoForRank(member.rankName || 'Grumete')] || []).map(r => (
-                              <option key={r} value={r}>{r}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </td>
-                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        {new Date(member.joinedAt).toLocaleDateString()}
-                      </td>
-                      <td className="text-emerald font-semibold">
-                        {formatMinutes(member.weekMinutes)}
-                      </td>
-                      <td>
-                        {formatMinutes(member.totalMinutes)}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          <button
-                            onClick={() => handleResetPassword(member.id, member.name)}
-                            className="btn-icon-warning"
-                            title="Restablecer contraseña"
-                          >
-                            <KeyRound size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteMember(member.id, member.name)}
-                            className="btn-icon-danger"
-                            title="Eliminar miembro"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                      </div>
+                      <div className="form-group flex-1">
+                        <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Rango Militar</label>
+                        <select
+                          value={member.rankName || 'Grumete'}
+                          onChange={(e) => handleChangeRank(member.id, e.target.value)}
+                          className="role-selector"
+                          style={{ maxWidth: '100%', width: '100%' }}
+                        >
+                          {(CARGO_RANKS[getCargoForRank(member.rankName || 'Grumete')] || []).map(r => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                      <div>
+                        Semana: <span className="text-emerald font-semibold">{formatMinutes(member.weekMinutes)}</span>
+                      </div>
+                      <div>
+                        Acumulado: <span className="text-secondary">{formatMinutes(member.totalMinutes)}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
+                      <button
+                        onClick={() => handleResetPassword(member.id, member.name)}
+                        className="btn btn-secondary btn-xs"
+                        style={{ height: '32px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        title="Restablecer contraseña"
+                      >
+                        <KeyRound size={14} /> Contraseña
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMember(member.id, member.name)}
+                        className="btn btn-red btn-xs"
+                        style={{ height: '32px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        title="Eliminar miembro"
+                      >
+                        <Trash2 size={14} /> Dar de baja
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </section>
       )}
 

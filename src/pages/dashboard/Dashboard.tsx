@@ -467,73 +467,132 @@ export const Dashboard: React.FC = () => {
           <span className="badge-count font-pixel">{activeDuties.length}</span>
         </div>
 
-        <div className="table-container">
-          {activeDuties.length === 0 ? (
+        {activeDuties.length === 0 ? (
+          <div className="table-container">
             <div className="empty-state">No hay ningún miembro en servicio activo en este momento.</div>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Keko</th>
-                  <th>Cargo</th>
-                  <th>Hora Inicio</th>
-                  <th>Tiempo Transcurrido</th>
-                  {isOfficerOrOwner && <th style={{ width: '120px' }}>Acciones</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {activeDuties.map((duty) => (
-                  <tr key={duty.id}>
-                    <td className="keko-cell">
-                      <div className="table-avatar-wrapper">
-                        <img
-                          src={habboService.getAvatarUrl(duty.userName, { size: 'm' })}
-                          alt={duty.userName}
-                          className="table-avatar-img"
-                        />
-                      </div>
-                      <span className="duty-keko-name">{duty.userName}</span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <img 
-                            src={habboService.getBadgeUrl(habboService.getBadgeForRank(duty.rankName || 'Grumete'))} 
-                            alt="Placa" 
-                            className="rank-badge-inline"
-                          />
-                          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{duty.rankName || 'Grumete'}</span>
-                        </div>
-                        <div>
-                          <span className={`badge-pill badge-${duty.role.toLowerCase()}`} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
-                            {duty.role === 'OWNER' ? 'Dueño' : duty.role === 'OFFICER' ? 'Oficial' : 'Militar'}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      {duty.startedAt ? new Date(duty.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pausado'}
-                    </td>
-                    <td className={duty.status === 'running' ? 'text-emerald font-semibold' : 'text-amber font-semibold'}>
-                      {formatTime(getElapsedMs(duty))}
-                    </td>
-                    {isOfficerOrOwner && (
-                      <td>
-                        <button
-                          onClick={() => handleTerminateDuty(duty.id)}
-                          className="btn btn-danger btn-xs"
-                          title="Forzar fin de turno"
-                        >
-                          <Square size={12} /> Terminar
-                        </button>
-                      </td>
-                    )}
+          </div>
+        ) : (
+          <>
+            <div className="table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Keko</th>
+                    <th>Cargo</th>
+                    <th>Hora Inicio</th>
+                    <th>Tiempo Transcurrido</th>
+                    {isOfficerOrOwner && <th style={{ width: '120px' }}>Acciones</th>}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                </thead>
+                <tbody>
+                  {activeDuties.map((duty) => (
+                    <tr key={duty.id}>
+                      <td className="keko-cell">
+                        <div className="table-avatar-wrapper">
+                          <img
+                            src={habboService.getAvatarUrl(duty.userName, { size: 'm' })}
+                            alt={duty.userName}
+                            className="table-avatar-img"
+                          />
+                        </div>
+                        <span className="duty-keko-name">{duty.userName}</span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <img 
+                              src={habboService.getBadgeUrl(habboService.getBadgeForRank(duty.rankName || 'Grumete'))} 
+                              alt="Placa" 
+                              className="rank-badge-inline"
+                            />
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{duty.rankName || 'Grumete'}</span>
+                          </div>
+                          <div>
+                            <span className={`badge-pill badge-${duty.role.toLowerCase()}`} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
+                              {duty.role === 'OWNER' ? 'Dueño' : duty.role === 'OFFICER' ? 'Oficial' : 'Militar'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        {duty.startedAt ? new Date(duty.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pausado'}
+                      </td>
+                      <td className={duty.status === 'running' ? 'text-emerald font-semibold' : 'text-amber font-semibold'}>
+                        {formatTime(getElapsedMs(duty))}
+                      </td>
+                      {isOfficerOrOwner && (
+                        <td>
+                          <button
+                            onClick={() => handleTerminateDuty(duty.id)}
+                            className="btn btn-danger btn-xs"
+                            title="Forzar fin de turno"
+                          >
+                            <Square size={12} /> Terminar
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards list */}
+            <div className="mobile-cards-list">
+              {activeDuties.map((duty) => (
+                <div key={duty.id} className="member-mobile-card card" style={{ borderLeft: duty.status === 'running' ? '4px solid var(--color-emerald)' : '4px solid var(--color-amber)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="table-avatar-wrapper">
+                      <img
+                        src={habboService.getAvatarUrl(duty.userName, { size: 'm' })}
+                        alt={duty.userName}
+                        className="table-avatar-img"
+                      />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{duty.userName}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        <img 
+                          src={habboService.getBadgeUrl(habboService.getBadgeForRank(duty.rankName || 'Grumete'))} 
+                          alt="Placa" 
+                          style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+                        />
+                        <span>{duty.rankName || 'Grumete'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Hora Inicio:</span>
+                      <span className="text-zinc-300">
+                        {duty.startedAt ? new Date(duty.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pausado'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Tiempo Transcurrido:</span>
+                      <span className={duty.status === 'running' ? 'text-emerald font-semibold' : 'text-amber font-semibold'}>
+                        {formatTime(getElapsedMs(duty))}
+                      </span>
+                    </div>
+                  </div>
+
+                  {isOfficerOrOwner && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                      <button
+                        onClick={() => handleTerminateDuty(duty.id)}
+                        className="btn btn-danger btn-xs"
+                        style={{ height: '32px' }}
+                      >
+                        <Square size={12} /> Terminar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
       <style>{`
@@ -712,6 +771,32 @@ export const Dashboard: React.FC = () => {
           padding: 6px 12px;
           font-weight: 600;
           border-radius: var(--radius-sm);
+        }
+
+        @media (min-width: 641px) {
+          .mobile-cards-list {
+            display: none;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .table-container {
+            display: none;
+          }
+          .mobile-cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          }
+          .member-mobile-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-zinc);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
         }
 
         @media (max-width: 768px) {

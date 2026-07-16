@@ -104,51 +104,116 @@ export const DashboardPermissions: React.FC = () => {
           <p>Cargando configuración de permisos...</p>
         </div>
       ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Acción / Funcionalidad</th>
-                <th>Descripción</th>
-                <th style={{ width: '220px' }}>Rol Mínimo Requerido</th>
-              </tr>
-            </thead>
-            <tbody>
-              {permissions.map((p) => {
-                const info = ACTION_DESCRIPTIONS[p.action_key] || { title: p.action_key, desc: 'Sin descripción.' };
-                const isUpdating = updatingKey === p.action_key;
+        <>
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Acción / Funcionalidad</th>
+                  <th>Descripción</th>
+                  <th style={{ width: '220px' }}>Rol Mínimo Requerido</th>
+                </tr>
+              </thead>
+              <tbody>
+                {permissions.map((p) => {
+                  const info = ACTION_DESCRIPTIONS[p.action_key] || { title: p.action_key, desc: 'Sin descripción.' };
+                  const isUpdating = updatingKey === p.action_key;
 
-                return (
-                  <tr key={p.action_key}>
-                    <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {info.title}
-                    </td>
-                    <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  return (
+                    <tr key={p.action_key}>
+                      <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {info.title}
+                      </td>
+                      <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        {info.desc}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <select
+                            value={p.min_role}
+                            onChange={(e) => handleUpdatePermission(p.action_key, e.target.value as any)}
+                            className="role-selector"
+                            style={{ width: '100%', maxWidth: '200px' }}
+                            disabled={isUpdating}
+                          >
+                            <option value="MEMBER">Militar (Cualquiera)</option>
+                            <option value="OFFICER">Oficial (Administradores)</option>
+                            <option value="OWNER">Dueño (Solo Propietarios)</option>
+                          </select>
+                          {isUpdating && <Loader2 className="animate-spin text-amber" size={16} />}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards list */}
+          <div className="mobile-cards-list">
+            {permissions.map((p) => {
+              const info = ACTION_DESCRIPTIONS[p.action_key] || { title: p.action_key, desc: 'Sin descripción.' };
+              const isUpdating = updatingKey === p.action_key;
+              return (
+                <div key={p.action_key} className="member-mobile-card card">
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{info.title}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                       {info.desc}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <select
-                          value={p.min_role}
-                          onChange={(e) => handleUpdatePermission(p.action_key, e.target.value as any)}
-                          className="role-selector"
-                          style={{ width: '100%', maxWidth: '200px' }}
-                          disabled={isUpdating}
-                        >
-                          <option value="MEMBER">Militar (Cualquiera)</option>
-                          <option value="OFFICER">Oficial (Administradores)</option>
-                          <option value="OWNER">Dueño (Solo Propietarios)</option>
-                        </select>
-                        {isUpdating && <Loader2 className="animate-spin text-amber" size={16} />}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Rol Mínimo Requerido</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <select
+                        value={p.min_role}
+                        onChange={(e) => handleUpdatePermission(p.action_key, e.target.value as any)}
+                        className="role-selector"
+                        style={{ width: '100%', maxWidth: '100%' }}
+                        disabled={isUpdating}
+                      >
+                        <option value="MEMBER">Militar (Cualquiera)</option>
+                        <option value="OFFICER">Oficial (Administradores)</option>
+                        <option value="OWNER">Dueño (Solo Propietarios)</option>
+                      </select>
+                      {isUpdating && <Loader2 className="animate-spin text-amber" size={16} />}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
-    </div>
-  );
-};
+
+        <style>{`
+          @media (min-width: 641px) {
+            .mobile-cards-list {
+              display: none;
+            }
+          }
+
+          @media (max-width: 640px) {
+            .table-container {
+              display: none;
+            }
+            .mobile-cards-list {
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+            }
+            .member-mobile-card {
+              background-color: var(--bg-card);
+              border: 1px solid var(--border-zinc);
+              border-radius: var(--radius-lg);
+              padding: 16px;
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            }
+          }
+        `}</style>
+      </div>
+    );
+  };

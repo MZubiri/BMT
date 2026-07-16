@@ -209,69 +209,127 @@ export const DashboardPay: React.FC = () => {
       {/* Payroll Table */}
       <section>
         <h2 className="section-subheading">Nómina Detallada</h2>
-        <div className="table-container">
-          {members.length === 0 ? (
+        {members.length === 0 ? (
+          <div className="table-container">
             <div className="empty-state">No hay miembros registrados en el batallón.</div>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Militar</th>
-                  <th>Rango Militar</th>
-                  <th>Tarifa Horaria</th>
-                  <th>Tiempo Servido</th>
-                  <th style={{ textAlign: 'right' }}>Paga Acumulada</th>
-                  <th style={{ width: '150px', textAlign: 'right' }}>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => {
-                  const payout = calculatePay(member.weekMinutes, member.rankName);
-                  const isPayable = member.weekMinutes > 0;
-                  
-                  return (
-                    <tr key={member.id} className={isPayable ? 'row-payable' : ''}>
-                      <td className="keko-cell">
-                        <div className="table-avatar-wrapper">
-                          <img
-                            src={habboService.getAvatarUrl(member.name, { size: 'm' })}
-                            alt={member.name}
-                            className="table-avatar-img"
-                          />
-                        </div>
-                        <span className="duty-keko-name">{member.name}</span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          </div>
+        ) : (
+          <>
+            <div className="table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Militar</th>
+                    <th>Rango Militar</th>
+                    <th>Tarifa Horaria</th>
+                    <th>Tiempo Servido</th>
+                    <th style={{ textAlign: 'right' }}>Paga Acumulada</th>
+                    <th style={{ width: '150px', textAlign: 'right' }}>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.map((member) => {
+                    const payout = calculatePay(member.weekMinutes, member.rankName);
+                    const isPayable = member.weekMinutes > 0;
+                    
+                    return (
+                      <tr key={member.id} className={isPayable ? 'row-payable' : ''}>
+                        <td className="keko-cell">
+                          <div className="table-avatar-wrapper">
+                            <img
+                              src={habboService.getAvatarUrl(member.name, { size: 'm' })}
+                              alt={member.name}
+                              className="table-avatar-img"
+                            />
+                          </div>
+                          <span className="duty-keko-name">{member.name}</span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <img 
+                              src={habboService.getBadgeUrl(habboService.getBadgeForRank(member.rankName || 'Grumete'))} 
+                              alt="Placa" 
+                              className="rank-badge-inline"
+                            />
+                            <span>{member.rankName || 'Grumete'}</span>
+                          </div>
+                        </td>
+                        <td>${getPayRate(member.rankName)} c. / hora</td>
+                        <td className="font-semibold text-zinc-300">
+                          {formatMinutes(member.weekMinutes)}
+                        </td>
+                        <td className="table-price" style={{ textAlign: 'right', fontSize: '1rem' }}>
+                          ${payout} c.
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          {payout > 0 ? (
+                            <span className="payout-badge payout-ready">Listo para pagar</span>
+                          ) : (
+                            <span className="payout-badge payout-empty">Sin servicio</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards list */}
+            <div className="mobile-cards-list">
+              {members.map((member) => {
+                const payout = calculatePay(member.weekMinutes, member.rankName);
+                return (
+                  <div key={member.id} className="member-mobile-card card" style={{ borderLeft: payout > 0 ? '4px solid var(--color-emerald)' : '1px solid var(--border-zinc)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="table-avatar-wrapper">
+                        <img
+                          src={habboService.getAvatarUrl(member.name, { size: 'm' })}
+                          alt={member.name}
+                          className="table-avatar-img"
+                        />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{member.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                           <img 
                             src={habboService.getBadgeUrl(habboService.getBadgeForRank(member.rankName || 'Grumete'))} 
                             alt="Placa" 
-                            className="rank-badge-inline"
+                            style={{ width: '16px', height: '16px', objectFit: 'contain' }}
                           />
                           <span>{member.rankName || 'Grumete'}</span>
                         </div>
-                      </td>
-                      <td>${getPayRate(member.rankName)} c. / hora</td>
-                      <td className="font-semibold text-zinc-300">
-                        {formatMinutes(member.weekMinutes)}
-                      </td>
-                      <td className="table-price" style={{ textAlign: 'right', fontSize: '1rem' }}>
-                        ${payout} c.
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        {payout > 0 ? (
-                          <span className="payout-badge payout-ready">Listo para pagar</span>
-                        ) : (
-                          <span className="payout-badge payout-empty">Sin servicio</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Tarifa Horaria:</span>
+                        <span className="text-zinc-300">${getPayRate(member.rankName)} c. / h</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Tiempo de Servicio:</span>
+                        <span className="font-semibold text-zinc-300">{formatMinutes(member.weekMinutes)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                        <span>Paga Acumulada:</span>
+                        <span className="text-amber">${payout} c.</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                      {payout > 0 ? (
+                        <span className="payout-badge payout-ready">Listo para pagar</span>
+                      ) : (
+                        <span className="payout-badge payout-empty">Sin servicio</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </section>
 
       <style>{`
@@ -344,6 +402,32 @@ export const DashboardPay: React.FC = () => {
           background-color: rgba(39, 39, 42, 0.2);
           color: var(--text-muted);
           border: 1px solid rgba(39, 39, 42, 0.4);
+        }
+
+        @media (min-width: 641px) {
+          .mobile-cards-list {
+            display: none;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .table-container {
+            display: none;
+          }
+          .mobile-cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          }
+          .member-mobile-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-zinc);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
         }
 
         @media (max-width: 480px) {
