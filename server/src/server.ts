@@ -134,9 +134,8 @@ app.post('/api/auth/register', async (req, res) => {
       }
 
       // Claiming legacy seeded account
-      // Core members (Owners / Officers) are auto-approved on registration
-      const isCore = ['OWNER', 'OFFICER'].includes(member.role) || 
-                      ['migue-lito13.-', '-lyeremi-', 'alex-frezee', 'guss', 'ashleeeeyy', '...alma@.', 'qir'].includes(officialName.toLowerCase());
+      // Only main owners/leaders are auto-approved on registration
+      const isCore = ['migue-lito13.-', '-lyeremi-', 'gusgus95mx', 'guss'].includes(officialName.toLowerCase());
       
       const nextApproved = isCore ? 1 : 0;
       await query(
@@ -213,6 +212,37 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (err: any) {
     console.error(err);
     return res.status(500).json({ error: 'Error en el proceso de autenticación' });
+  }
+});
+
+app.post('/api/auth/change-password', authenticateToken, async (req: any, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Falta la contraseña actual o la nueva' });
+  }
+  if (newPassword.length < 4) {
+    return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 4 caracteres' });
+  }
+
+  try {
+    const members = await query<any[]>('SELECT id, password_hash FROM members WHERE id = ?', [req.user.id]);
+    if (members.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const member = members[0];
+    const passwordMatches = verifyPassword(currentPassword, member.password_hash);
+    if (!passwordMatches) {
+      return res.status(400).json({ error: 'La contraseña actual es incorrecta' });
+    }
+
+    const newHash = hashPassword(newPassword);
+    await query('UPDATE members SET password_hash = ? WHERE id = ?', [newHash, req.user.id]);
+
+    return res.json({ success: true, message: 'Contraseña actualizada con éxito' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error al cambiar la contraseña' });
   }
 });
 
@@ -380,7 +410,10 @@ app.get('/api/members', async (req, res) => {
   }
 });
 
-app.post('/api/members', async (req, res) => {
+app.post('/api/members', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
   const { username, role, rankName } = req.body;
   if (!username) return res.status(400).json({ error: 'Falta el nombre de usuario' });
 
@@ -404,7 +437,10 @@ app.post('/api/members', async (req, res) => {
   }
 });
 
-app.put('/api/members/:id/role', async (req, res) => {
+app.put('/api/members/:id/role', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
   const { id } = req.params;
   const { role } = req.body;
   if (!role) return res.status(400).json({ error: 'Falta el rol' });
@@ -417,7 +453,10 @@ app.put('/api/members/:id/role', async (req, res) => {
   }
 });
 
-app.put('/api/members/:id/rank', async (req, res) => {
+app.put('/api/members/:id/rank', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
   const { id } = req.params;
   const { rankName } = req.body;
   if (!rankName) return res.status(400).json({ error: 'Falta el rango' });
@@ -430,7 +469,27 @@ app.put('/api/members/:id/rank', async (req, res) => {
   }
 });
 
-app.delete('/api/members/:id', async (req, res) => {
+app.put('/api/members/:id/reset-password', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
+  const { id } = req.params;
+  const { newPassword } = req.body;
+  if (!newPassword) return res.status(400).json({ error: 'Falta la nueva contraseña' });
+
+  try {
+    const passwordHash = hashPassword(newPassword);
+    await query('UPDATE members SET password_hash = ? WHERE id = ?', [passwordHash, id]);
+    return res.json({ success: true, message: 'Contraseña restablecida con éxito' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al restablecer la contraseña' });
+  }
+});
+
+app.delete('/api/members/:id', authenticateToken, async (req: any, res) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'OFFICER') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
   const { id } = req.params;
   try {
     await query('DELETE FROM members WHERE id = ?', [id]);

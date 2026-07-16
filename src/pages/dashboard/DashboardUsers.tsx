@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Trash2, Search, Loader2, Check, RefreshCw, Clock, ShieldCheck, UserMinus } from 'lucide-react';
+import { Users, UserPlus, Trash2, Search, Loader2, Check, RefreshCw, Clock, ShieldCheck, UserMinus, KeyRound } from 'lucide-react';
 import { habboService } from '../../services/habboService';
 
 interface Member {
@@ -137,6 +137,26 @@ export const DashboardUsers: React.FC = () => {
         })
         .catch(err => alert(err.message));
     }
+  };
+
+  const handleResetPassword = (memberId: number, memberName: string) => {
+    const newPassword = window.prompt(`Introduce la nueva contraseña para "${memberName}":`);
+    if (newPassword === null) return; // Cancelled
+    if (newPassword.trim().length < 4) {
+      alert('La contraseña debe tener al menos 4 caracteres.');
+      return;
+    }
+
+    fetch(`/api/members/${memberId}/reset-password`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ newPassword: newPassword.trim() })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al restablecer la contraseña');
+        alert(`Contraseña de "${memberName}" restablecida con éxito.`);
+      })
+      .catch(err => alert(err.message));
   };
 
   const handleChangeRole = (memberId: number, newRole: 'OWNER' | 'OFFICER' | 'MEMBER') => {
@@ -354,13 +374,22 @@ export const DashboardUsers: React.FC = () => {
                         {formatMinutes(member.totalMinutes)}
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button
-                          onClick={() => handleDeleteMember(member.id, member.name)}
-                          className="btn-icon-danger"
-                          title="Eliminar miembro"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => handleResetPassword(member.id, member.name)}
+                            className="btn-icon-warning"
+                            title="Restablecer contraseña"
+                          >
+                            <KeyRound size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMember(member.id, member.name)}
+                            className="btn-icon-danger"
+                            title="Eliminar miembro"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -696,6 +725,22 @@ export const DashboardUsers: React.FC = () => {
           color: var(--color-red);
           background-color: rgba(239, 68, 68, 0.05);
           border-color: rgba(239, 68, 68, 0.15);
+        }
+
+        .btn-icon-warning {
+          background: none;
+          border: 1px solid transparent;
+          color: var(--text-muted);
+          padding: 8px;
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          transition: var(--transition-smooth);
+        }
+
+        .btn-icon-warning:hover {
+          color: var(--color-amber);
+          background-color: rgba(251, 191, 36, 0.05);
+          border-color: rgba(251, 191, 36, 0.15);
         }
 
         .animate-spin {
