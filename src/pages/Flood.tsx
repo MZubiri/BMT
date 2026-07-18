@@ -323,6 +323,13 @@ export const Flood: React.FC = () => {
           gap: 32px;
         }
 
+        @media (max-width: 768px) {
+          .flood-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+        }
+
         .flood-section {
           background-color: var(--bg-card);
           border: 1px solid var(--border-zinc);

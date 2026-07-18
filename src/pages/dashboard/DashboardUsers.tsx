@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Trash2, Search, Loader2, Check, RefreshCw, Clock, ShieldCheck, UserMinus, KeyRound } from 'lucide-react';
+import { Users, UserPlus, Trash2, Search, Loader2, Check, RefreshCw, Clock, ShieldCheck, UserMinus, KeyRound, X } from 'lucide-react';
 import { habboService } from '../../services/habboService';
 
 interface Member {
@@ -45,6 +45,14 @@ export const DashboardUsers: React.FC = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Custom Reset Password Modal States
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetMemberId, setResetMemberId] = useState<number | null>(null);
+  const [resetMemberName, setResetMemberName] = useState('');
+  const [resetPasswordValue, setResetPasswordValue] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetMessage, setResetMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const getHeaders = () => {
     const token = localStorage.getItem('bmt_token');
@@ -166,23 +174,45 @@ export const DashboardUsers: React.FC = () => {
   };
 
   const handleResetPassword = (memberId: number, memberName: string) => {
-    const newPassword = window.prompt(`Introduce la nueva contraseña para "${memberName}":`);
-    if (newPassword === null) return; // Cancelled
-    if (newPassword.trim().length < 4) {
-      alert('La contraseña debe tener al menos 4 caracteres.');
+    setResetMemberId(memberId);
+    setResetMemberName(memberName);
+    setResetPasswordValue('');
+    setResetMessage(null);
+    setResetModalOpen(true);
+  };
+
+  const handleConfirmResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetMemberId) return;
+    if (resetPasswordValue.trim().length < 4) {
+      setResetMessage({ text: 'La contraseña debe tener al menos 4 caracteres.', type: 'error' });
       return;
     }
 
-    fetch(`/api/members/${memberId}/reset-password`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify({ newPassword: newPassword.trim() })
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Error al restablecer la contraseña');
-        alert(`Contraseña de "${memberName}" restablecida con éxito.`);
-      })
-      .catch(err => alert(err.message));
+    setIsResetting(true);
+    setResetMessage(null);
+
+    try {
+      const response = await fetch(`/api/members/${resetMemberId}/reset-password`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ newPassword: resetPasswordValue.trim() })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al restablecer la contraseña');
+      }
+
+      setResetMessage({ text: 'Contraseña restablecida con éxito.', type: 'success' });
+      setTimeout(() => {
+        setResetModalOpen(false);
+      }, 1500);
+    } catch (err: any) {
+      setResetMessage({ text: err.message || 'Error de red', type: 'error' });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
 
@@ -588,7 +618,116 @@ export const DashboardUsers: React.FC = () => {
         </div>
       )}
 
+      {/* Reset Password Modal */}
+      {resetModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content card">
+            <div className="modal-header">
+              <h2 className="section-subheading" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem' }}>
+                <KeyRound className="text-amber" size={20} />
+                Restablecer Contraseña
+              </h2>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={() => setResetModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px', marginBottom: '16px' }}>
+              Establece una nueva contraseña de acceso para el militar <strong>{resetMemberName}</strong>.
+            </p>
+
+            {resetMessage && (
+              <div className={`alert ${resetMessage.type === 'success' ? 'alert-info' : 'alert-danger'}`} style={{ marginBottom: '16px' }}>
+                {resetMessage.type === 'success' && <Check size={16} className="text-emerald" />}
+                <span>{resetMessage.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmResetPassword}>
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label className="form-label">Nueva Contraseña</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Mínimo 4 caracteres..."
+                  value={resetPasswordValue}
+                  onChange={(e) => setResetPasswordValue(e.target.value)}
+                  className="form-input"
+                  disabled={isResetting}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setResetModalOpen(false)}
+                  className="btn btn-secondary"
+                  disabled={isResetting}
+                  style={{ height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isResetting || resetPasswordValue.trim().length < 4}
+                  style={{ height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {isResetting ? <Loader2 className="animate-spin" size={16} /> : 'Guardar Nueva Contraseña'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style>{`
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(9, 9, 11, 0.85);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 999;
+          padding: 16px;
+        }
+
+        .modal-content {
+          width: 100%;
+          max-width: 440px;
+          background-color: var(--bg-card);
+          border: 1px solid var(--border-zinc);
+          border-radius: var(--radius-lg);
+          padding: 24px !important;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          animation: modalFadeIn 0.2s ease-out forwards;
+        }
+
+        .modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          padding-bottom: 12px;
+          margin-bottom: 12px;
+        }
+
+        @keyframes modalFadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
         .members-cards-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
