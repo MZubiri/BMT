@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Play, Pause, Square, X, UserPlus, Users, KeyRound, Loader2, Check } from 'lucide-react';
+import { Clock, Play, Pause, Square, X, UserPlus, Users } from 'lucide-react';
 import { habboService } from '../../services/habboService';
 import type { UserSession } from './DashboardLayout';
 
@@ -33,12 +33,7 @@ export const Dashboard: React.FC = () => {
   const [myDuty, setMyDuty] = useState<ActiveDuty | null>(null);
   const [note, setNote] = useState('');
   
-  // Password change state
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [settingsMessage, setSettingsMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-  
+
   // Officer state to start someone else's time
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [memberNote, setMemberNote] = useState('');
@@ -217,38 +212,7 @@ export const Dashboard: React.FC = () => {
       .catch(err => alert(err.message));
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword || !newPassword) return;
-    if (newPassword.length < 4) {
-      setSettingsMessage({ text: 'La nueva contraseña debe tener al menos 4 caracteres.', type: 'error' });
-      return;
-    }
 
-    setIsChangingPassword(true);
-    setSettingsMessage(null);
-
-    try {
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ currentPassword, newPassword })
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al cambiar la contraseña');
-      }
-
-      setSettingsMessage({ text: 'Contraseña actualizada con éxito.', type: 'success' });
-      setCurrentPassword('');
-      setNewPassword('');
-    } catch (err: any) {
-      setSettingsMessage({ text: err.message || 'Error de red', type: 'error' });
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
 
   if (!session) return null;
 
@@ -373,50 +337,6 @@ export const Dashboard: React.FC = () => {
       </section>
 
       {/* Settings / Password Change Section */}
-      <section className="dashboard-section card">
-        <h2 className="section-title">
-          <KeyRound className="text-amber" size={24} />
-          Seguridad de la Cuenta
-        </h2>
-        <p className="section-subtitle-small">
-          Cambia tu contraseña personal de acceso a la oficina.
-        </p>
-
-        {settingsMessage && (
-          <div className={`alert ${settingsMessage.type === 'success' ? 'alert-info' : 'alert-danger'}`} style={{ marginTop: '12px' }}>
-            {settingsMessage.type === 'success' && <Check size={16} className="text-emerald" />}
-            <span>{settingsMessage.text}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px', marginTop: '16px' }}>
-          <div className="form-group">
-            <label className="form-label">Contraseña Actual</label>
-            <input 
-              type="password" 
-              className="form-input" 
-              required 
-              placeholder="Contraseña actual..." 
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Nueva Contraseña</label>
-            <input 
-              type="password" 
-              className="form-input" 
-              required 
-              placeholder="Mínimo 4 caracteres..." 
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-          </div>
-          <button type="submit" className="btn btn-secondary w-full" style={{ alignSelf: 'flex-start' }} disabled={isChangingPassword}>
-            {isChangingPassword ? <Loader2 className="animate-spin" size={16} /> : 'Cambiar Contraseña'}
-          </button>
-        </form>
-      </section>
 
       {/* 2. Admin Member Duty Starter (Visible only to Officers/Owners) */}
       {isOfficerOrOwner && (

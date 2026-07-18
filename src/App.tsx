@@ -16,6 +16,7 @@ import { Dashboard } from './pages/dashboard/Dashboard';
 import { DashboardUsers } from './pages/dashboard/DashboardUsers';
 import { DashboardPay } from './pages/dashboard/DashboardPay';
 import { DashboardPermissions } from './pages/dashboard/DashboardPermissions';
+import { DashboardProfile } from './pages/dashboard/DashboardProfile';
 
 export const App: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -107,6 +108,7 @@ export const App: React.FC = () => {
               <Route path="users" element={<DashboardUsers />} />
               <Route path="pay" element={<DashboardPay />} />
               <Route path="permissions" element={<DashboardPermissions />} />
+              <Route path="profile" element={<DashboardProfile />} />
             </Route>
           </Routes>
         </main>

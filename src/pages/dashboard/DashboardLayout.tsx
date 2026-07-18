@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link, Outlet } from 'react-router-dom';
-import { Clock, Users, DollarSign, LogOut, MessageSquare, ShieldCheck } from 'lucide-react';
+import { Clock, Users, DollarSign, LogOut, MessageSquare, ShieldCheck, User } from 'lucide-react';
 import { habboService } from '../../services/habboService';
 
 export interface UserSession {
@@ -64,6 +64,11 @@ export const DashboardLayout: React.FC = () => {
           <Link to="/dashboard" className={`sidebar-link ${isTimeTab ? 'active' : ''}`}>
             <Clock size={18} />
             <span>Mi Tiempo</span>
+          </Link>
+
+          <Link to="/dashboard/profile" className={`sidebar-link ${location.pathname.toLowerCase().includes('/dashboard/profile') ? 'active' : ''}`}>
+            <User size={18} />
+            <span>Mi Perfil</span>
           </Link>
           
           {showAdminMenu && (
@@ -206,6 +211,12 @@ export const DashboardLayout: React.FC = () => {
           }
           .sidebar-nav::-webkit-scrollbar {
             display: none;
+          }
+          .sidebar-link {
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            padding: 8px 12px !important;
+            font-size: 0.85rem !important;
           }
         }
       `}</style>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Award, CreditCard, MessageSquare, Shield, Trophy } from 'lucide-react';
+import { Award, Clock, CreditCard, MessageSquare, Shield, Trophy } from 'lucide-react';
 import { habboService } from '../services/habboService';
 
 const JERARQUIA = [
@@ -29,6 +29,37 @@ const DEPARTAMENTOS = [
 ];
 
 export const Home: React.FC = () => {
+  const [times, setTimes] = React.useState({
+    es: '',
+    col: '',
+    mex: '',
+    arg: ''
+  });
+
+  React.useEffect(() => {
+    const updateTimes = () => {
+      const now = new Date();
+      const formatOption = (tz: string) => {
+        return now.toLocaleTimeString('es-ES', {
+          timeZone: tz,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+      };
+      setTimes({
+        es: formatOption('Europe/Madrid'),
+        col: formatOption('America/Bogota'),
+        mex: formatOption('America/Mexico_City'),
+        arg: formatOption('America/Argentina/Buenos_Aires')
+      });
+    };
+    updateTimes();
+    const interval = setInterval(updateTimes, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="home-container">
       {/* Hero Section */}
@@ -37,6 +68,30 @@ export const Home: React.FC = () => {
         <div className="status-badge-container">
           <span className="status-dot"></span>
           <span className="status-text font-pixel">CUARTEL ACTIVO · EN SERVICIO</span>
+        </div>
+
+        {/* World Clock Ribbon */}
+        <div className="world-clock-container">
+          <div className="world-clock-title">
+            <Clock size={14} className="text-amber" />
+            <span>RELOJ BMT:</span>
+          </div>
+          <div className="timezone-item">
+            <span className="tz-label">ESPAÑA</span>
+            <span className="tz-time font-pixel">{times.es}</span>
+          </div>
+          <div className="timezone-item">
+            <span className="tz-label">COL / PER</span>
+            <span className="tz-time font-pixel">{times.col}</span>
+          </div>
+          <div className="timezone-item">
+            <span className="tz-label">MÉXICO</span>
+            <span className="tz-time font-pixel">{times.mex}</span>
+          </div>
+          <div className="timezone-item">
+            <span className="tz-label">ARGENTINA</span>
+            <span className="tz-time font-pixel">{times.arg}</span>
+          </div>
         </div>
 
         <div className="hero-logo-wrapper">
@@ -366,6 +421,53 @@ export const Home: React.FC = () => {
 
       {/* CSS specific for Home Page */}
       <style>{`
+        .world-clock-container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 20px;
+          background: rgba(24, 24, 27, 0.45);
+          border: 1px solid var(--border-zinc);
+          border-radius: var(--radius-lg);
+          padding: 8px 20px;
+          margin-top: 16px;
+          margin-bottom: 24px;
+          flex-wrap: wrap;
+          max-width: 100%;
+        }
+
+        .world-clock-title {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.7rem;
+          color: var(--text-muted);
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        .timezone-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-width: 70px;
+        }
+
+        .tz-label {
+          font-size: 0.65rem;
+          color: var(--text-muted);
+          font-weight: 700;
+          margin-bottom: 2px;
+        }
+
+        .tz-time {
+          font-size: 0.85rem;
+          color: var(--color-amber);
+          font-weight: 700;
+          letter-spacing: 0.02em;
+        }
+
         .home-container {
           max-width: 1100px;
           margin: 0 auto;

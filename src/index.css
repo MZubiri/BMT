@@ -610,13 +610,13 @@ a {
 /* Dashboard Specific Layout */
 .dashboard-layout {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: calc(100vh - 65px);
 }
 
 @media (max-width: 768px) {
   .dashboard-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -676,6 +676,8 @@ a {
 .dashboard-pane {
   padding: 40px 32px;
   max-width: 900px;
+  width: 100%;
+  min-width: 0;
 }
 
 @media (max-width: 640px) {
