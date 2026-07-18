@@ -73,8 +73,32 @@ async function checkPermission(userId: number, actionKey: string): Promise<boole
       'Dueño', 'Fundador', 'Líder Dueño Supremo'
     ];
 
-    const userRankIndex = RANK_ORDER.indexOf(userRank || 'Grumete');
-    const minRankIndex = RANK_ORDER.indexOf(minRole);
+    const RANK_ALIASES: Record<string, string> = {
+      '3er teniente': 'Oficial Tercero',
+      '3er. teniente': 'Oficial Tercero',
+      '2do teniente': 'Oficial Segundo',
+      '2do. teniente': 'Oficial Segundo',
+      '1er teniente': 'Oficial Primero',
+      '1er. teniente': 'Oficial Primero',
+      'sub-oficial': 'Sub-Oficial',
+      'suboficial': 'Sub-Oficial',
+      'gral. de brigada': 'General de Brigada',
+      'gral. de division': 'General de División',
+      'gral. de división': 'General de División',
+      'gral. de ejercito': 'General de Ejército',
+      'gral. de ejército': 'General de Ejército',
+      'tesorero ejecutivo': 'Líder Dueño Supremo',
+      'líder dueño supremo': 'Líder Dueño Supremo',
+      'lider dueno supremo': 'Líder Dueño Supremo'
+    };
+
+    const cleanRank = (r: string) => {
+      const normalized = (r || '').toLowerCase().trim();
+      return RANK_ALIASES[normalized] || r;
+    };
+
+    const userRankIndex = RANK_ORDER.indexOf(cleanRank(userRank || 'Grumete'));
+    const minRankIndex = RANK_ORDER.indexOf(cleanRank(minRole));
 
     if (minRankIndex === -1) {
       return userRole === 'OWNER';
@@ -393,10 +417,12 @@ app.post('/api/admin/reject/:id', authenticateToken, async (req: any, res) => {
 // Admin Permissions Config API (OWNER only)
 // -------------------------------------------------------------
 app.get('/api/admin/permissions', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER') {
-    return res.status(403).json({ error: 'Acceso denegado. Solo el Dueño puede gestionar permisos.' });
-  }
   try {
+    const userRows = await query<any[]>('SELECT role, name FROM members WHERE id = ?', [req.user.id]);
+    const isSuperAdmin = userRows.length > 0 && (userRows[0].role === 'OWNER' || userRows[0].name.toLowerCase() === 'gusgus95mx');
+    if (!isSuperAdmin) {
+      return res.status(403).json({ error: 'Acceso denegado. Solo el Dueño puede gestionar permisos.' });
+    }
     const permissions = await query('SELECT * FROM permissions ORDER BY action_key ASC');
     return res.json(permissions);
   } catch (err) {
@@ -405,14 +431,16 @@ app.get('/api/admin/permissions', authenticateToken, async (req: any, res) => {
 });
 
 app.put('/api/admin/permissions', authenticateToken, async (req: any, res) => {
-  if (req.user.role !== 'OWNER') {
-    return res.status(403).json({ error: 'Acceso denegado. Solo el Dueño puede gestionar permisos.' });
-  }
-  const { actionKey, minRole } = req.body;
-  if (!actionKey || !minRole) {
-    return res.status(400).json({ error: 'Falta la acción o el rol mínimo' });
-  }
   try {
+    const userRows = await query<any[]>('SELECT role, name FROM members WHERE id = ?', [req.user.id]);
+    const isSuperAdmin = userRows.length > 0 && (userRows[0].role === 'OWNER' || userRows[0].name.toLowerCase() === 'gusgus95mx');
+    if (!isSuperAdmin) {
+      return res.status(403).json({ error: 'Acceso denegado. Solo el Dueño puede gestionar permisos.' });
+    }
+    const { actionKey, minRole } = req.body;
+    if (!actionKey || !minRole) {
+      return res.status(400).json({ error: 'Falta la acción o el rol mínimo' });
+    }
     await query('UPDATE permissions SET min_role = ? WHERE action_key = ?', [minRole, actionKey]);
     return res.json({ success: true });
   } catch (err) {

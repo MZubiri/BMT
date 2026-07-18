@@ -91,9 +91,86 @@ export const syncService = {
       }
     }
 
+    // Parse motto for rank override
+    const mottoLower = (userData.motto || '').toLowerCase();
+    const MOTTO_RANK_MAP: Record<string, string> = {
+      'soldado de primera': 'Soldado de Primera',
+      'soldado de 1ra': 'Soldado de Primera',
+      'cabo primero': 'Cabo Primero',
+      'cabo 1ro': 'Cabo Primero',
+      'sargento primero': 'Sargento Primero',
+      'sargento 1ro': 'Sargento Primero',
+      'sub-oficial': 'Sub-Oficial',
+      'suboficial': 'Sub-Oficial',
+      'oficial tercero': 'Oficial Tercero',
+      '3er teniente': 'Oficial Tercero',
+      '3er. teniente': 'Oficial Tercero',
+      'oficial segundo': 'Oficial Segundo',
+      '2do teniente': 'Oficial Segundo',
+      '2do. teniente': 'Oficial Segundo',
+      'oficial primero': 'Oficial Primero',
+      '1er teniente': 'Oficial Primero',
+      '1er. teniente': 'Oficial Primero',
+      'sub-teniente': 'Sub-Teniente',
+      'subteniente': 'Sub-Teniente',
+      'teniente': 'Teniente',
+      'capitán': 'Capitán',
+      'capitan': 'Capitán',
+      'mayor': 'Mayor',
+      'teniente coronel': 'Teniente Coronel',
+      'coronel': 'Coronel',
+      'general de brigada': 'General de Brigada',
+      'gral. de brigada': 'General de Brigada',
+      'general de división': 'General de División',
+      'general de division': 'General de División',
+      'gral. de división': 'General de División',
+      'gral. de division': 'General de División',
+      'general de ejército': 'General de Ejército',
+      'general de ejercito': 'General de Ejército',
+      'gral. de ejército': 'General de Ejército',
+      'gral. de ejercito': 'General de Ejército',
+      'general del estado mayor': 'General del Estado Mayor',
+      'secretario general': 'Secretario General',
+      'director general': 'Director General',
+      'líder dueño supremo': 'Líder Dueño Supremo',
+      'lider dueno supremo': 'Líder Dueño Supremo',
+      'tesorero ejecutivo': 'Líder Dueño Supremo',
+      'fundador': 'Fundador',
+      'dueño': 'Dueño',
+      'dueno': 'Dueño',
+      'grumete': 'Grumete',
+      'soldado': 'Soldado',
+      'cabo': 'Cabo',
+      'sargento': 'Sargento'
+    };
+
+    const sortedKeywords = Object.keys(MOTTO_RANK_MAP).sort((a, b) => b.length - a.length);
+    let matchedMottoRank: string | null = null;
+    for (const kw of sortedKeywords) {
+      if (mottoLower.includes(kw)) {
+        matchedMottoRank = MOTTO_RANK_MAP[kw];
+        break;
+      }
+    }
+
+    if (matchedMottoRank) {
+      matchedRank = matchedMottoRank;
+      const rankToRole: Record<string, 'OWNER' | 'OFFICER' | 'MEMBER'> = {
+        'Grumete': 'MEMBER', 'Soldado': 'MEMBER', 'Soldado de Primera': 'MEMBER',
+        'Cabo': 'MEMBER', 'Cabo Primero': 'MEMBER', 'Sargento': 'MEMBER', 'Sargento Primero': 'MEMBER', 'Sub-Oficial': 'MEMBER',
+        'Oficial Tercero': 'OFFICER', 'Oficial Segundo': 'OFFICER', 'Oficial Primero': 'OFFICER',
+        'Sub-Teniente': 'OFFICER', 'Teniente': 'OFFICER', 'Capitán': 'OFFICER',
+        'Mayor': 'OFFICER', 'Teniente Coronel': 'OFFICER', 'Coronel': 'OFFICER',
+        'General de Brigada': 'OWNER', 'General de División': 'OWNER', 'General de Ejército': 'OWNER',
+        'General del Estado Mayor': 'OWNER', 'Secretario General': 'OWNER', 'Director General': 'OWNER',
+        'Dueño': 'OWNER', 'Fundador': 'OWNER', 'Líder Dueño Supremo': 'OWNER'
+      };
+      matchedRole = rankToRole[matchedRank] || 'MEMBER';
+    }
+
     // Special bypass for Guss/development accounts or founders
     const lowercaseName = name.toLowerCase();
-    if (lowercaseName === 'migue-lito13.-' || lowercaseName === '-lyeremi-') {
+    if (lowercaseName === 'migue-lito13.-' || lowercaseName === '-lyeremi-' || lowercaseName === 'gusgus95mx') {
       matchedRole = 'OWNER';
     } else if (lowercaseName === 'alex-frezee') {
       matchedRole = 'OFFICER';

@@ -37,7 +37,7 @@ export const DashboardLayout: React.FC = () => {
   const isPayTab = lowercasePath.includes('/dashboard/pay');
   const isFloodTab = lowercasePath.includes('/dashboard/flood');
 
-  const showAdminMenu = session.role === 'OWNER' || session.role === 'OFFICER';
+  const showAdminMenu = session.role === 'OWNER' || session.role === 'OFFICER' || session.name.toLowerCase() === 'gusgus95mx';
 
   return (
     <div className="dashboard-layout">
@@ -86,7 +86,7 @@ export const DashboardLayout: React.FC = () => {
                 <MessageSquare size={18} />
                 <span>Floods</span>
               </Link>
-              {session.role === 'OWNER' && (
+              {(session.role === 'OWNER' || session.name.toLowerCase() === 'gusgus95mx') && (
                 <Link to="/dashboard/permissions" className={`sidebar-link ${location.pathname === '/dashboard/permissions' ? 'active' : ''}`}>
                   <ShieldCheck size={18} />
                   <span>Permisos</span>
