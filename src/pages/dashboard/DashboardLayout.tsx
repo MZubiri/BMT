@@ -215,8 +215,9 @@ export const DashboardLayout: React.FC = () => {
           .sidebar-link {
             white-space: nowrap !important;
             flex-shrink: 0 !important;
-            padding: 8px 12px !important;
-            font-size: 0.85rem !important;
+            padding: 6px 10px !important;
+            font-size: 0.8rem !important;
+            gap: 6px !important;
           }
         }
       `}</style>

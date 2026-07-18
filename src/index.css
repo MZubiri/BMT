@@ -682,7 +682,14 @@ a {
 
 @media (max-width: 640px) {
   .dashboard-pane {
-    padding: 24px 16px;
+    padding: 20px 12px;
+  }
+  .section-title {
+    font-size: 1.5rem !important;
+  }
+  .section-subtitle {
+    font-size: 0.85rem !important;
+    margin-bottom: 20px !important;
   }
 }
 

@@ -618,6 +618,12 @@ export const DashboardUsers: React.FC = () => {
           border-bottom: 2px solid var(--border-zinc);
           gap: 16px;
           margin-bottom: 10px;
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+
+        .admin-tabs::-webkit-scrollbar {
+          display: none;
         }
 
         .admin-tab-link {
@@ -634,6 +640,8 @@ export const DashboardUsers: React.FC = () => {
           cursor: pointer;
           transition: var(--transition-smooth);
           margin-bottom: -2px;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
 
         .admin-tab-link:hover {
