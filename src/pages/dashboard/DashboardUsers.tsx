@@ -41,7 +41,6 @@ export const DashboardUsers: React.FC = () => {
   
   // Form state
   const [newMemberName, setNewMemberName] = useState('');
-  const [newMemberCargo, setNewMemberCargo] = useState('Reclutas');
   const [newMemberRank, setNewMemberRank] = useState('Grumete');
   
   const [isLoading, setIsLoading] = useState(false);
@@ -129,7 +128,7 @@ export const DashboardUsers: React.FC = () => {
         headers: getHeaders(),
         body: JSON.stringify({
           username: targetName,
-          role: getRoleForCargo(newMemberCargo),
+          role: getRoleForCargo(getCargoForRank(newMemberRank)),
           rankName: newMemberRank
         })
       });
@@ -142,7 +141,6 @@ export const DashboardUsers: React.FC = () => {
       const newMember = await response.json();
       setMessage({ text: `Miembro "${newMember.name}" agregado con éxito.`, type: 'success' });
       setNewMemberName('');
-      setNewMemberCargo('Reclutas');
       setNewMemberRank('Grumete');
       refreshMembers();
       setActiveTab('members');
@@ -324,187 +322,109 @@ export const DashboardUsers: React.FC = () => {
           </div>
 
           {filteredMembers.length === 0 ? (
-            <div className="table-container">
-              <div className="empty-state">No se encontraron miembros activos.</div>
-            </div>
+            <div className="empty-state" style={{ marginTop: '24px' }}>No se encontraron miembros activos.</div>
           ) : (
-            <>
-              <div className="table-container">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Miembro</th>
-                      <th>Cargo</th>
-                      <th>Rango Militar</th>
-                      <th>Ingreso</th>
-                      <th>Semana</th>
-                      <th>Total Acumulado</th>
-                      <th style={{ width: '80px', textAlign: 'right' }}>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMembers.map((member) => (
-                      <tr key={member.id}>
-                        <td className="keko-cell">
-                          <div className="table-avatar-wrapper">
-                            <img
-                              src={habboService.getAvatarUrl(member.name, { size: 'm' })}
-                              alt={member.name}
-                              className="table-avatar-img"
-                            />
-                          </div>
-                          <span className="duty-keko-name">{member.name}</span>
-                        </td>
-                        <td>
-                          <select
-                            value={getCargoForRank(member.rankName || 'Grumete')}
-                            onChange={(e) => {
-                              const newCargo = e.target.value;
-                              const defaultRank = CARGO_RANKS[newCargo][0];
-                              handleChangeRank(member.id, defaultRank);
-                            }}
-                            className="role-selector"
-                          >
-                            {Object.keys(CARGO_RANKS).map(cargo => (
-                              <option key={cargo} value={cargo}>{cargo}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <img 
-                              src={habboService.getBadgeUrl(habboService.getBadgeForRank(member.rankName || 'Grumete'))} 
-                              alt="Placa" 
-                              className="rank-badge-inline"
-                            />
-                            <select
-                              value={member.rankName || 'Grumete'}
-                              onChange={(e) => handleChangeRank(member.id, e.target.value)}
-                              className="role-selector"
-                            >
-                              {(CARGO_RANKS[getCargoForRank(member.rankName || 'Grumete')] || []).map(r => (
-                                <option key={r} value={r}>{r}</option>
-                              ))}
-                            </select>
-                          </div>
-                        </td>
-                        <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          {new Date(member.joinedAt).toLocaleDateString()}
-                        </td>
-                        <td className="text-emerald font-semibold">
-                          {formatMinutes(member.weekMinutes)}
-                        </td>
-                        <td>
-                          {formatMinutes(member.totalMinutes)}
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button
-                              onClick={() => handleResetPassword(member.id, member.name)}
-                              className="btn-icon-warning"
-                              title="Restablecer contraseña"
-                            >
-                              <KeyRound size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMember(member.id, member.name)}
-                              className="btn-icon-danger"
-                              title="Eliminar miembro"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile cards list */}
-              <div className="mobile-cards-list">
-                {filteredMembers.map((member) => (
-                  <div key={member.id} className="member-mobile-card card">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="table-avatar-wrapper">
-                        <img
-                          src={habboService.getAvatarUrl(member.name, { size: 'm' })}
-                          alt={member.name}
-                          className="table-avatar-img"
-                        />
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{member.name}</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          Ingreso: {new Date(member.joinedAt).toLocaleDateString()}
-                        </div>
-                      </div>
+            <div className="members-cards-grid">
+              {filteredMembers.map((member) => (
+                <div key={member.id} className="member-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--bg-darker)',
+                      border: '1px solid var(--border-zinc)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      flexShrink: 0
+                    }}>
+                      <img
+                        src={habboService.getAvatarUrl(member.name, { size: 'm' })}
+                        alt={member.name}
+                        style={{ height: '80px', marginTop: '-10px', imageRendering: 'pixelated' }}
+                      />
                     </div>
-
-                    <div className="form-group-row" style={{ marginTop: '4px' }}>
-                      <div className="form-group flex-1">
-                        <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Cargo</label>
-                        <select
-                          value={getCargoForRank(member.rankName || 'Grumete')}
-                          onChange={(e) => {
-                            const newCargo = e.target.value;
-                            const defaultRank = CARGO_RANKS[newCargo][0];
-                            handleChangeRank(member.id, defaultRank);
-                          }}
-                          className="role-selector"
-                          style={{ maxWidth: '100%', width: '100%' }}
-                        >
-                          {Object.keys(CARGO_RANKS).map(cargo => (
-                            <option key={cargo} value={cargo}>{cargo}</option>
-                          ))}
-                        </select>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {member.name}
                       </div>
-                      <div className="form-group flex-1">
-                        <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Rango Militar</label>
-                        <select
-                          value={member.rankName || 'Grumete'}
-                          onChange={(e) => handleChangeRank(member.id, e.target.value)}
-                          className="role-selector"
-                          style={{ maxWidth: '100%', width: '100%' }}
-                        >
-                          {(CARGO_RANKS[getCargoForRank(member.rankName || 'Grumete')] || []).map(r => (
-                            <option key={r} value={r}>{r}</option>
-                          ))}
-                        </select>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Ingreso: {new Date(member.joinedAt).toLocaleDateString()}
                       </div>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '4px' }}>
-                      <div>
-                        Semana: <span className="text-emerald font-semibold">{formatMinutes(member.weekMinutes)}</span>
-                      </div>
-                      <div>
-                        Acumulado: <span className="text-secondary">{formatMinutes(member.totalMinutes)}</span>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
-                      <button
-                        onClick={() => handleResetPassword(member.id, member.name)}
-                        className="btn btn-secondary btn-xs"
-                        style={{ height: '32px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        title="Restablecer contraseña"
-                      >
-                        <KeyRound size={14} /> Contraseña
-                      </button>
-                      <button
-                        onClick={() => handleDeleteMember(member.id, member.name)}
-                        className="btn btn-red btn-xs"
-                        style={{ height: '32px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        title="Eliminar miembro"
-                      >
-                        <Trash2 size={14} /> Dar de baja
-                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </>
+
+                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Rango / Cargo</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <img
+                        src={habboService.getBadgeUrl(habboService.getBadgeForRank(member.rankName || 'Grumete'))}
+                        alt="Placa"
+                        style={{ width: '24px', height: '24px', objectFit: 'contain', flexShrink: 0 }}
+                      />
+                      <select
+                        value={member.rankName || 'Grumete'}
+                        onChange={(e) => handleChangeRank(member.id, e.target.value)}
+                        className="role-selector"
+                        style={{ width: '100%', flex: 1, maxWidth: '100%' }}
+                      >
+                        {Object.entries(CARGO_RANKS).map(([cargo, ranks]) => (
+                          <optgroup key={cargo} label={cargo}>
+                            {ranks.map(r => (
+                              <option key={r} value={r}>{r}</option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '0.8rem',
+                    borderTop: '1px solid rgba(255,255,255,0.05)',
+                    paddingTop: '12px',
+                    marginTop: '8px'
+                  }}>
+                    <div>
+                      Semana: <span className="text-emerald font-semibold">{formatMinutes(member.weekMinutes)}</span>
+                    </div>
+                    <div>
+                      Acumulado: <span className="text-secondary">{formatMinutes(member.totalMinutes)}</span>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    justifyContent: 'flex-end',
+                    borderTop: '1px solid rgba(255,255,255,0.05)',
+                    paddingTop: '12px',
+                    marginTop: '4px'
+                  }}>
+                    <button
+                      onClick={() => handleResetPassword(member.id, member.name)}
+                      className="btn btn-secondary btn-xs"
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '32px' }}
+                      title="Restablecer contraseña"
+                    >
+                      <KeyRound size={14} /> Contraseña
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMember(member.id, member.name)}
+                      className="btn btn-red btn-xs"
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '32px' }}
+                      title="Eliminar miembro"
+                    >
+                      <Trash2 size={14} /> Dar de baja
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </section>
       )}
@@ -520,58 +440,70 @@ export const DashboardUsers: React.FC = () => {
             Estos usuarios se registraron en la web y esperan aprobación para poder iniciar sesión y registrar horas de servicio.
           </p>
 
-          <div className="table-container">
-            {pending.length === 0 ? (
-              <div className="empty-state">No hay solicitudes de registro pendientes en este momento.</div>
-            ) : (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Keko</th>
-                    <th>Fecha de Registro</th>
-                    <th style={{ width: '200px', textAlign: 'right' }}>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pending.map((reqUser) => (
-                    <tr key={reqUser.id}>
-                      <td className="keko-cell">
-                        <div className="table-avatar-wrapper">
-                          <img
-                            src={habboService.getAvatarUrl(reqUser.name, { size: 'm' })}
-                            alt={reqUser.name}
-                            className="table-avatar-img"
-                          />
-                        </div>
-                        <span className="duty-keko-name">{reqUser.name}</span>
-                      </td>
-                      <td style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                        {new Date(reqUser.joinedAt).toLocaleString()}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleApprove(reqUser.id, reqUser.name)}
-                            className="btn btn-emerald btn-xs"
-                          >
-                            <ShieldCheck size={14} /> Aprobar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleReject(reqUser.id, reqUser.name)}
-                            className="btn btn-red btn-xs"
-                          >
-                            <UserMinus size={14} /> Rechazar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          {pending.length === 0 ? (
+            <div className="empty-state" style={{ marginTop: '24px' }}>No hay solicitudes de registro pendientes en este momento.</div>
+          ) : (
+            <div className="members-cards-grid">
+              {pending.map((reqUser) => (
+                <div key={reqUser.id} className="member-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--bg-darker)',
+                      border: '1px solid var(--border-zinc)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      flexShrink: 0
+                    }}>
+                      <img
+                        src={habboService.getAvatarUrl(reqUser.name, { size: 'm' })}
+                        alt={reqUser.name}
+                        style={{ height: '80px', marginTop: '-10px', imageRendering: 'pixelated' }}
+                      />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {reqUser.name}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Registro: {new Date(reqUser.joinedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    justifyContent: 'flex-end',
+                    borderTop: '1px solid rgba(255,255,255,0.05)',
+                    paddingTop: '12px',
+                    marginTop: 'auto'
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => handleApprove(reqUser.id, reqUser.name)}
+                      className="btn btn-emerald btn-xs"
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '32px' }}
+                    >
+                      <ShieldCheck size={14} /> Aprobar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleReject(reqUser.id, reqUser.name)}
+                      className="btn btn-red btn-xs"
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '32px' }}
+                    >
+                      <UserMinus size={14} /> Rechazar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -603,40 +535,24 @@ export const DashboardUsers: React.FC = () => {
                 />
               </div>
 
-              <div className="form-group-row">
-                <div className="form-group flex-1">
-                  <label htmlFor="memberCargo" className="form-label">Cargo</label>
-                  <select
-                    id="memberCargo"
-                    value={newMemberCargo}
-                    onChange={(e) => {
-                      const newCargo = e.target.value;
-                      setNewMemberCargo(newCargo);
-                      setNewMemberRank(CARGO_RANKS[newCargo][0]);
-                    }}
-                    className="form-input"
-                    disabled={isLoading}
-                  >
-                    {Object.keys(CARGO_RANKS).map(cargo => (
-                      <option key={cargo} value={cargo}>{cargo}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group flex-1">
-                  <label htmlFor="memberRank" className="form-label">Rango Militar</label>
-                  <select
-                    id="memberRank"
-                    value={newMemberRank}
-                    onChange={(e) => setNewMemberRank(e.target.value)}
-                    className="form-input"
-                    disabled={isLoading}
-                  >
-                    {(CARGO_RANKS[newMemberCargo] || []).map(r => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="form-group">
+                <label htmlFor="memberRank" className="form-label">Rango / Cargo Militar</label>
+                <select
+                  id="memberRank"
+                  value={newMemberRank}
+                  onChange={(e) => setNewMemberRank(e.target.value)}
+                  className="form-input"
+                  disabled={isLoading}
+                  style={{ width: '100%' }}
+                >
+                  {Object.entries(CARGO_RANKS).map(([cargo, ranks]) => (
+                    <optgroup key={cargo} label={cargo}>
+                      {ranks.map(r => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
               </div>
 
               <button type="submit" className="btn btn-primary w-full" disabled={isLoading || !newMemberName.trim()}>
@@ -673,6 +589,30 @@ export const DashboardUsers: React.FC = () => {
       )}
 
       <style>{`
+        .members-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 16px;
+          margin-top: 20px;
+        }
+
+        .member-card {
+          background-color: var(--bg-card);
+          border: 1px solid var(--border-zinc);
+          border-radius: var(--radius-lg);
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          transition: var(--transition-smooth);
+        }
+
+        .member-card:hover {
+          border-color: var(--border-zinc-hover);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        }
+
         .admin-tabs {
           display: flex;
           border-bottom: 2px solid var(--border-zinc);
