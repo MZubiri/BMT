@@ -539,8 +539,8 @@ export const DashboardUsers: React.FC = () => {
 
       {/* Register Manual View */}
       {activeTab === 'add' && (
-        <div className="grid-2 fade-in">
-          <section className="card">
+        <div className="fade-in">
+          <section className="card" style={{ maxWidth: '600px', margin: '0 auto' }}>
             <h2 className="section-subheading">
               <UserPlus size={20} className="text-amber" />
               Agregar Miembro Directamente
@@ -595,25 +595,6 @@ export const DashboardUsers: React.FC = () => {
                 )}
               </button>
             </form>
-          </section>
-
-          {/* Info panel */}
-          <section className="card admin-info-card">
-            <h2 className="section-subheading">Estructura de Cargos</h2>
-            <div className="role-explainer-list">
-              <div className="role-explainer-item">
-                <span className="badge-pill badge-owner">Dueño</span>
-                <p>Tiene control absoluto sobre la oficina. Puede gestionar miembros, modificar todos los rangos, registrar tiempos y reiniciar la caja de pagas semanal.</p>
-              </div>
-              <div className="role-explainer-item">
-                <span className="badge-pill badge-officer">Oficial</span>
-                <p>Ayuda en la administración. Puede agregar miembros, registrar el tiempo de servicio de otros militares y ver el reporte de pagas acumuladas.</p>
-              </div>
-              <div className="role-explainer-item">
-                <span className="badge-pill badge-member">Militar</span>
-                <p>Miembro del batallón. Solo tiene acceso a su panel personal "Mi Tiempo" para iniciar y terminar sus propios turnos de guardia.</p>
-              </div>
-            </div>
           </section>
         </div>
       )}

@@ -35,6 +35,7 @@ export const DashboardLayout: React.FC = () => {
   const isTimeTab = lowercasePath === '/dashboard' || lowercasePath === '/dashboard/';
   const isUsersTab = lowercasePath.includes('/dashboard/users');
   const isPayTab = lowercasePath.includes('/dashboard/pay');
+  const isFloodTab = lowercasePath.includes('/dashboard/flood');
 
   const showAdminMenu = session.role === 'OWNER' || session.role === 'OFFICER';
 
@@ -81,7 +82,7 @@ export const DashboardLayout: React.FC = () => {
                 <DollarSign size={18} />
                 <span>Caja de Pagas</span>
               </Link>
-              <Link to="/flood" className="sidebar-link">
+              <Link to="/dashboard/flood" className={`sidebar-link ${isFloodTab ? 'active' : ''}`}>
                 <MessageSquare size={18} />
                 <span>Floods</span>
               </Link>

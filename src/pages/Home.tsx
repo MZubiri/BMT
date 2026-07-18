@@ -44,7 +44,6 @@ export const Home: React.FC = () => {
           timeZone: tz,
           hour: '2-digit',
           minute: '2-digit',
-          second: '2-digit',
           hour12: false
         });
       };
@@ -56,7 +55,7 @@ export const Home: React.FC = () => {
       });
     };
     updateTimes();
-    const interval = setInterval(updateTimes, 1000);
+    const interval = setInterval(updateTimes, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -434,6 +433,33 @@ export const Home: React.FC = () => {
           margin-bottom: 24px;
           flex-wrap: wrap;
           max-width: 100%;
+        }
+
+        @media (max-width: 640px) {
+          .world-clock-container {
+            flex-direction: column !important;
+            gap: 10px !important;
+            padding: 14px 16px !important;
+            align-items: center !important;
+          }
+          .world-clock-title {
+            width: 100% !important;
+            justify-content: center !important;
+            font-size: 0.8rem !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            padding-bottom: 8px !important;
+            margin-bottom: 4px !important;
+          }
+          .world-clock-container .timezone-item {
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            max-width: 180px !important;
+            min-width: 0 !important;
+          }
+          .world-clock-container .tz-label {
+            margin-bottom: 0 !important;
+          }
         }
 
         .world-clock-title {

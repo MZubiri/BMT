@@ -455,6 +455,10 @@ a {
   gap: 32px;
 }
 
+.grid-2 > *, .grid-3 > * {
+  min-width: 0;
+}
+
 @media (max-width: 768px) {
   .grid-2 {
     grid-template-columns: 1fr;
@@ -681,6 +685,9 @@ a {
 }
 
 @media (max-width: 640px) {
+  .container {
+    padding: 24px 16px !important;
+  }
   .dashboard-pane {
     padding: 20px 12px;
   }

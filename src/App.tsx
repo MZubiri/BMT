@@ -107,6 +107,7 @@ export const App: React.FC = () => {
               <Route index element={<Dashboard />} />
               <Route path="users" element={<DashboardUsers />} />
               <Route path="pay" element={<DashboardPay />} />
+              <Route path="flood" element={<Flood />} />
               <Route path="permissions" element={<DashboardPermissions />} />
               <Route path="profile" element={<DashboardProfile />} />
             </Route>
