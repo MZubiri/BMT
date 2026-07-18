@@ -679,7 +679,7 @@ export const DashboardUsers: React.FC = () => {
                   disabled={isResetting || resetPasswordValue.trim().length < 4}
                   style={{ height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  {isResetting ? <Loader2 className="animate-spin" size={16} /> : 'Guardar Nueva Contraseña'}
+                  {isResetting ? <Loader2 className="animate-spin" size={16} /> : 'Guardar'}
                 </button>
               </div>
             </form>

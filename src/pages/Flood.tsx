@@ -559,9 +559,74 @@ export const Flood: React.FC = () => {
           border-color: rgba(239, 68, 68, 0.2);
         }
 
+        /* Modal Editor Styles */
+        .modal-backdrop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(9, 9, 11, 0.85);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 999;
+          padding: 16px;
+        }
+
+        .modal-content {
+          width: 100%;
+          max-width: 480px;
+          background-color: var(--bg-card);
+          border: 1px solid var(--border-zinc);
+          border-radius: var(--radius-lg);
+          padding: 24px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          animation: modalFadeIn 0.2s ease-out forwards;
+        }
+
+        .modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          padding-bottom: 12px;
+          margin-bottom: 16px;
+        }
+
+        .modal-footer {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 12px;
+          margin-top: 24px;
+        }
+
+        .close-btn {
+          background: none;
+          border: none;
+          color: var(--text-muted);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: var(--transition-smooth);
+        }
+
+        .close-btn:hover {
+          color: var(--text-primary);
+        }
+
+        @keyframes modalFadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
         @media (max-width: 768px) {
           .habbo-bubble::before, .habbo-bubble::after {
             display: none;
+          }
         }
       `}</style>
     </div>
