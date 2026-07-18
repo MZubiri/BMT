@@ -66,7 +66,7 @@ ON DUPLICATE KEY UPDATE category=VALUES(category), content=VALUES(content);
 
 CREATE TABLE IF NOT EXISTS permissions (
   action_key VARCHAR(100) PRIMARY KEY,
-  min_role ENUM('OWNER', 'OFFICER', 'MEMBER') NOT NULL DEFAULT 'OWNER'
+  min_role VARCHAR(100) NOT NULL DEFAULT 'OWNER'
 );
 
 -- Seed Data para Permisos

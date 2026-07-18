@@ -6,6 +6,16 @@ interface Permission {
   min_role: 'OWNER' | 'OFFICER' | 'MEMBER';
 }
 
+const CARGO_RANKS: Record<string, string[]> = {
+  'Reclutas': ['Grumete', 'Soldado', 'Soldado de Primera'],
+  'Sub-Oficiales': ['Cabo', 'Cabo Primero', 'Sargento', 'Sargento Primero', 'Sub-Oficial'],
+  'Oficiales': ['Oficial Tercero', 'Oficial Segundo', 'Oficial Primero', 'Sub-Teniente', 'Teniente', 'Capitán'],
+  'Oficiales Superiores': ['Mayor', 'Teniente Coronel', 'Coronel'],
+  'Generales': ['General de Brigada', 'General de División', 'General de Ejército'],
+  'Estado Mayor': ['General del Estado Mayor', 'Secretario General', 'Director General'],
+  'Dueño': ['Dueño', 'Fundador', 'Líder Dueño Supremo']
+};
+
 const ACTION_DESCRIPTIONS: Record<string, { title: string; desc: string }> = {
   'edit_floods': {
     title: 'Modificar Floods',
@@ -136,9 +146,18 @@ export const DashboardPermissions: React.FC = () => {
                             style={{ width: '100%', maxWidth: '200px' }}
                             disabled={isUpdating}
                           >
-                            <option value="MEMBER">Militar (Cualquiera)</option>
-                            <option value="OFFICER">Oficial (Administradores)</option>
-                            <option value="OWNER">Dueño (Solo Propietarios)</option>
+                            <optgroup label="Roles del Sistema">
+                              <option value="MEMBER">Militar (Cualquiera)</option>
+                              <option value="OFFICER">Oficial (Administradores)</option>
+                              <option value="OWNER">Dueño (Solo Propietarios)</option>
+                            </optgroup>
+                            {Object.entries(CARGO_RANKS).map(([cargo, ranks]) => (
+                              <optgroup key={cargo} label={cargo}>
+                                {ranks.map(r => (
+                                  <option key={r} value={r}>{r}</option>
+                                ))}
+                              </optgroup>
+                            ))}
                           </select>
                           {isUpdating && <Loader2 className="animate-spin text-amber" size={16} />}
                         </div>
@@ -173,10 +192,19 @@ export const DashboardPermissions: React.FC = () => {
                         style={{ width: '100%', maxWidth: '100%' }}
                         disabled={isUpdating}
                       >
-                        <option value="MEMBER">Militar (Cualquiera)</option>
-                        <option value="OFFICER">Oficial (Administradores)</option>
-                        <option value="OWNER">Dueño (Solo Propietarios)</option>
-                      </select>
+                            <optgroup label="Roles del Sistema">
+                              <option value="MEMBER">Militar (Cualquiera)</option>
+                              <option value="OFFICER">Oficial (Administradores)</option>
+                              <option value="OWNER">Dueño (Solo Propietarios)</option>
+                            </optgroup>
+                            {Object.entries(CARGO_RANKS).map(([cargo, ranks]) => (
+                              <optgroup key={cargo} label={cargo}>
+                                {ranks.map(r => (
+                                  <option key={r} value={r}>{r}</option>
+                                ))}
+                              </optgroup>
+                            ))}
+                          </select>
                       {isUpdating && <Loader2 className="animate-spin text-amber" size={16} />}
                     </div>
                   </div>

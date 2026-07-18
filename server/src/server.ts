@@ -40,16 +40,46 @@ function verifyPassword(password: string, storedHash: string): boolean {
 // -------------------------------------------------------------
 // Permissions System
 // -------------------------------------------------------------
-async function checkPermission(userRole: string, actionKey: string): Promise<boolean> {
+async function checkPermission(userId: number, actionKey: string): Promise<boolean> {
   try {
+    const userRows = await query<any[]>('SELECT role, rank_name FROM members WHERE id = ?', [userId]);
+    if (userRows.length === 0) return false;
+    const { role: userRole, rank_name: userRank } = userRows[0];
+
     const rows = await query<any[]>('SELECT min_role FROM permissions WHERE action_key = ?', [actionKey]);
     if (rows.length === 0) return userRole === 'OWNER';
     const minRole = rows[0].min_role;
-    
-    const roleHierarchy: Record<string, number> = { 'OWNER': 3, 'OFFICER': 2, 'MEMBER': 1 };
-    return (roleHierarchy[userRole] || 0) >= (roleHierarchy[minRole] || 0);
+
+    // OWNER role always bypasses any permission check
+    if (userRole === 'OWNER') return true;
+
+    // If minRole is one of the standard roles, check role hierarchy
+    if (['OWNER', 'OFFICER', 'MEMBER'].includes(minRole)) {
+      const roleHierarchy: Record<string, number> = { 'OWNER': 3, 'OFFICER': 2, 'MEMBER': 1 };
+      return (roleHierarchy[userRole] || 0) >= (roleHierarchy[minRole] || 0);
+    }
+
+    // Otherwise, check rank hierarchy
+    const RANK_ORDER = [
+      'Grumete', 'Soldado', 'Soldado de Primera',
+      'Cabo', 'Cabo Primero', 'Sargento', 'Sargento Primero', 'Sub-Oficial',
+      'Oficial Tercero', 'Oficial Segundo', 'Oficial Primero', 'Sub-Teniente', 'Teniente', 'Capitán',
+      'Mayor', 'Teniente Coronel', 'Coronel',
+      'General de Brigada', 'General de División', 'General de Ejército',
+      'General del Estado Mayor', 'Secretario General', 'Director General',
+      'Dueño', 'Fundador', 'Líder Dueño Supremo'
+    ];
+
+    const userRankIndex = RANK_ORDER.indexOf(userRank || 'Grumete');
+    const minRankIndex = RANK_ORDER.indexOf(minRole);
+
+    if (minRankIndex === -1) {
+      return userRole === 'OWNER';
+    }
+
+    return userRankIndex >= minRankIndex;
   } catch (e) {
-    return userRole === 'OWNER';
+    return false;
   }
 }
 
@@ -319,7 +349,7 @@ app.post('/api/auth/bypass', async (req, res) => {
 // Admin Pending Approvals API
 // -------------------------------------------------------------
 app.get('/api/admin/pending', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_registrations')) {
+  if (!await checkPermission(req.user.id, 'manage_registrations')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   try {
@@ -331,7 +361,7 @@ app.get('/api/admin/pending', authenticateToken, async (req: any, res) => {
 });
 
 app.post('/api/admin/approve/:id', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_registrations')) {
+  if (!await checkPermission(req.user.id, 'manage_registrations')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -344,7 +374,7 @@ app.post('/api/admin/approve/:id', authenticateToken, async (req: any, res) => {
 });
 
 app.post('/api/admin/reject/:id', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_registrations')) {
+  if (!await checkPermission(req.user.id, 'manage_registrations')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -400,7 +430,7 @@ app.get('/api/floods', async (req, res) => {
 });
 
 app.post('/api/floods', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'edit_floods')) {
+  if (!await checkPermission(req.user.id, 'edit_floods')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { category, content } = req.body;
@@ -416,7 +446,7 @@ app.post('/api/floods', authenticateToken, async (req: any, res) => {
 });
 
 app.put('/api/floods/:id', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'edit_floods')) {
+  if (!await checkPermission(req.user.id, 'edit_floods')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -433,7 +463,7 @@ app.put('/api/floods/:id', authenticateToken, async (req: any, res) => {
 });
 
 app.delete('/api/floods/:id', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'edit_floods')) {
+  if (!await checkPermission(req.user.id, 'edit_floods')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -458,7 +488,7 @@ app.get('/api/members', async (req, res) => {
 });
 
 app.post('/api/members', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_members')) {
+  if (!await checkPermission(req.user.id, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { username, role, rankName } = req.body;
@@ -485,7 +515,7 @@ app.post('/api/members', authenticateToken, async (req: any, res) => {
 });
 
 app.put('/api/members/:id/role', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_members')) {
+  if (!await checkPermission(req.user.id, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -501,7 +531,7 @@ app.put('/api/members/:id/role', authenticateToken, async (req: any, res) => {
 });
 
 app.put('/api/members/:id/rank', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_members')) {
+  if (!await checkPermission(req.user.id, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -537,7 +567,7 @@ app.put('/api/members/:id/rank', authenticateToken, async (req: any, res) => {
 });
 
 app.put('/api/members/:id/reset-password', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_members')) {
+  if (!await checkPermission(req.user.id, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -554,7 +584,7 @@ app.put('/api/members/:id/reset-password', authenticateToken, async (req: any, r
 });
 
 app.delete('/api/members/:id', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_members')) {
+  if (!await checkPermission(req.user.id, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const { id } = req.params;
@@ -567,7 +597,7 @@ app.delete('/api/members/:id', authenticateToken, async (req: any, res) => {
 });
 
 app.post('/api/members/sync-all', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_members')) {
+  if (!await checkPermission(req.user.id, 'manage_members')) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   // Trigger full sync in background to avoid timeout
@@ -611,7 +641,7 @@ app.post('/api/duties/start', authenticateToken, async (req: any, res) => {
   
   const targetMemberId = memberId ? Number(memberId) : req.user.id;
   
-  if (targetMemberId !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
+  if (targetMemberId !== req.user.id && !await checkPermission(req.user.id, 'manage_duties')) {
     return res.status(403).json({ error: 'No tienes permiso para iniciar el servicio de otro miembro' });
   }
 
@@ -641,7 +671,7 @@ app.post('/api/duties/:id/pause', authenticateToken, async (req: any, res) => {
     const [duty] = await query<any[]>('SELECT * FROM active_duties WHERE id = ?', [id]);
     if (!duty) return res.status(404).json({ error: 'Servicio no encontrado' });
 
-    if (duty.member_id !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
+    if (duty.member_id !== req.user.id && !await checkPermission(req.user.id, 'manage_duties')) {
       return res.status(403).json({ error: 'No tienes permiso para modificar este servicio' });
     }
 
@@ -668,7 +698,7 @@ app.post('/api/duties/:id/resume', authenticateToken, async (req: any, res) => {
     const [duty] = await query<any[]>('SELECT * FROM active_duties WHERE id = ?', [id]);
     if (!duty) return res.status(404).json({ error: 'Servicio no encontrado' });
 
-    if (duty.member_id !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
+    if (duty.member_id !== req.user.id && !await checkPermission(req.user.id, 'manage_duties')) {
       return res.status(403).json({ error: 'No tienes permiso para modificar este servicio' });
     }
 
@@ -693,7 +723,7 @@ app.post('/api/duties/:id/terminate', authenticateToken, async (req: any, res) =
     const [duty] = await query<any[]>('SELECT * FROM active_duties WHERE id = ?', [id]);
     if (!duty) return res.status(404).json({ error: 'Servicio no encontrado' });
 
-    if (duty.member_id !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
+    if (duty.member_id !== req.user.id && !await checkPermission(req.user.id, 'manage_duties')) {
       return res.status(403).json({ error: 'No tienes permiso para finalizar este servicio' });
     }
 
@@ -740,8 +770,8 @@ app.post('/api/duties/:id/cancel', authenticateToken, async (req: any, res) => {
     const [duty] = await query<any[]>('SELECT * FROM active_duties WHERE id = ?', [id]);
     if (!duty) return res.status(404).json({ error: 'Servicio no encontrado' });
 
-    if (duty.member_id !== req.user.id && !await checkPermission(req.user.role, 'manage_duties')) {
-      return res.status(403).json({ error: 'No tienes permiso para cancelar este servicio' });
+    if (duty.member_id !== req.user.id && !await checkPermission(req.user.id, 'manage_duties')) {
+      return res.status(403).json({ error: 'No tienes permission para cancelar este servicio' });
     }
 
     await query('DELETE FROM active_duties WHERE id = ?', [id]);
@@ -755,7 +785,7 @@ app.post('/api/duties/:id/cancel', authenticateToken, async (req: any, res) => {
 // Payroll API (Protected for Officers/Owners)
 // -------------------------------------------------------------
 app.post('/api/pay/reset', authenticateToken, async (req: any, res) => {
-  if (!await checkPermission(req.user.role, 'manage_paybox')) {
+  if (!await checkPermission(req.user.id, 'manage_paybox')) {
     return res.status(403).json({ error: 'No tienes permiso para reiniciar las nóminas' });
   }
 

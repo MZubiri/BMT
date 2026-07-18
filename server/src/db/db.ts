@@ -87,6 +87,9 @@ export async function initDb(): Promise<void> {
       try {
         await connection.query('ALTER TABLE members ADD COLUMN approved TINYINT(1) DEFAULT 0');
       } catch (e) {}
+      try {
+        await connection.query('ALTER TABLE permissions MODIFY COLUMN min_role VARCHAR(100) NOT NULL DEFAULT \'OWNER\'');
+      } catch (e) {}
 
       console.log('Database initialized successfully.');
     } catch (err) {
